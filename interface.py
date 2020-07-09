@@ -6,6 +6,10 @@ from PyQt5.QtWidgets import QPushButton, QTextEdit, QLabel, QFileDialog, QPlainT
 #Other libraries 
 import sys
 import os
+import re
+from itertools import islice 
+from itertools import permutations
+import pandas as pd
 
 class main_window(QDialog):
 	def __init__(self):
@@ -41,7 +45,7 @@ class main_window(QDialog):
 		}
 		QLabel#selected_file{
             font-family: "Lucida Console", Courier, monospace;
-            font-size: 10px;
+            font-size: 15px;
 		}
 		"""
 
@@ -60,7 +64,9 @@ class main_window(QDialog):
 		self.lb_selected_file = QLabel("File path")
 		self.lb_selected_file.setObjectName("selected_file")
 
-		lb_n_groups = QLabel("N° groups", self)
+		lb_title_groups = QLabel("Groups:", self)
+
+		self.lb_n_groups = QLabel("N° groups", self)
 
 		btn_generate_dataframe = QPushButton("Generate dataframe", self)
 		btn_generate_dataframe.setObjectName("generate_dataframe")
@@ -69,7 +75,8 @@ class main_window(QDialog):
 		head_layout = QHBoxLayout()
 		head_layout.addWidget(btn_open_file)
 		head_layout.addWidget(self.lb_selected_file)
-		head_layout.addWidget(lb_n_groups)
+		head_layout.addWidget(lb_title_groups)
+		head_layout.addWidget(self.lb_n_groups)
 		head_layout.addWidget(btn_generate_dataframe)
 
 		return head_layout
@@ -107,9 +114,10 @@ class main_window(QDialog):
 		path = filename[0]
 		print(path)
 
+		self.file_rows = []
+
 		with open(path, 'r') as origin_file:
 			self.lb_selected_file.setText(path)
-			self.file_rows = []
 			for rows in origin_file:
 				self.file_rows.append(rows)
 				#print(self.file_rows)
@@ -156,6 +164,37 @@ class main_window(QDialog):
 						print(upper)
 
 		find_upper_percentiles("Upper percentiles", path)
+
+		start_index_group = self.file_rows.index(population)
+		end_index_group = self.file_rows.index(total_population)
+		index_lower = self.file_rows.index(lower)
+		index_upper = self.file_rows.index(upper)
+
+		print(start_index_group, end_index_group, index_lower, index_upper)
+
+		with open(path, 'r') as origin_file:
+			for line in islice(origin_file, start_index_group + 4, end_index_group):
+				with open('groups.csv','a') as group_file:
+					print(re.sub("\s+",",", line.strip()))
+					group_file.write(re.sub("\s+",",", line.strip())+ '\n')
+
+		groups_df = pd.read_csv('groups.csv',header=None)
+		#Remove NaN values
+		groups_df = groups_df.dropna()
+		#Remove 'Locus' columns
+		groups_df = groups_df.drop(2,1)
+		#Remove 'missing (0)' column
+		groups_df = groups_df.drop(4,1)
+
+		"""
+			Get total of groups and its n-value
+			Change data types str -> int
+		"""
+
+		self.total_per_group = list(map(int, (groups_df[3])))
+		self.lb_n_groups.setText(str(len(self.total_per_group)))
+		#print(self.total_per_group)
+
 
 	def generate_dataframe(self):
 		pass
