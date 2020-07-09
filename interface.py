@@ -109,7 +109,53 @@ class main_window(QDialog):
 
 		with open(path, 'r') as origin_file:
 			self.lb_selected_file.setText(path)
-			#print(origin_file.readline())
+			self.file_rows = []
+			for rows in origin_file:
+				self.file_rows.append(rows)
+				#print(self.file_rows)
+				#print(origin_file.readline())
+
+		def find_population(substr, infile):
+			global population
+			with open(path) as origin:
+				for line in origin:
+					if substr in line:
+						population = line
+						print(population)
+
+		find_population("Population", path)
+
+		def find_total_population(substr, infile):
+			global total_population
+			with open(path) as origin:
+				for line in origin:
+					if substr in line:
+						total_population = line
+						print(total_population)
+
+		find_total_population("Total of", path)
+
+
+		def find_lower_percentiles(substr, infile):
+			global lower
+			with open(path) as origin:
+				for line in origin:
+					if substr in line:
+						lower = line
+						print(lower)
+
+		find_lower_percentiles("Lower percentiles", path)
+
+
+		def find_upper_percentiles(substr, infile):
+			global upper
+			with open(path) as origin:
+				for line in origin:
+					if substr in line:
+						upper = line
+						print(upper)
+
+		find_upper_percentiles("Upper percentiles", path)
 
 	def generate_dataframe(self):
 		pass
