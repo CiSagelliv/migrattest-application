@@ -112,7 +112,7 @@ class main_window(QDialog):
 	def go_to_open(self):
 		filename = QFileDialog.getOpenFileName()
 		path = filename[0]
-		print(path)
+		#print(path)
 
 		self.file_rows = []
 
@@ -129,7 +129,7 @@ class main_window(QDialog):
 				for line in origin:
 					if substr in line:
 						population = line
-						print(population)
+						#print(population)
 
 		find_population("Population", path)
 
@@ -139,7 +139,7 @@ class main_window(QDialog):
 				for line in origin:
 					if substr in line:
 						total_population = line
-						print(total_population)
+						#print(total_population)
 
 		find_total_population("Total of", path)
 
@@ -150,7 +150,7 @@ class main_window(QDialog):
 				for line in origin:
 					if substr in line:
 						lower = line
-						print(lower)
+						#print(lower)
 
 		find_lower_percentiles("Lower percentiles", path)
 
@@ -161,22 +161,35 @@ class main_window(QDialog):
 				for line in origin:
 					if substr in line:
 						upper = line
-						print(upper)
+						#print(upper)
 
 		find_upper_percentiles("Upper percentiles", path)
+
+		"""
+			Find indexes in file_rows list
+		"""
 
 		start_index_group = self.file_rows.index(population)
 		end_index_group = self.file_rows.index(total_population)
 		index_lower = self.file_rows.index(lower)
 		index_upper = self.file_rows.index(upper)
 
-		print(start_index_group, end_index_group, index_lower, index_upper)
+		#print(start_index_group, end_index_group, index_lower, index_upper)
+
+		"""
+			This must be executed once (searching how to delete csv file)
+			Creates groups csv file
+		"""	
 
 		with open(path, 'r') as origin_file:
 			for line in islice(origin_file, start_index_group + 4, end_index_group):
 				with open('groups.csv','a') as group_file:
-					print(re.sub("\s+",",", line.strip()))
+					#print(re.sub("\s+",",", line.strip()))
 					group_file.write(re.sub("\s+",",", line.strip())+ '\n')
+
+		"""
+			Creates groups dataframe with unnecessary data
+		"""	
 
 		groups_df = pd.read_csv('groups.csv',header=None)
 		#Remove NaN values
@@ -194,6 +207,36 @@ class main_window(QDialog):
 		self.total_per_group = list(map(int, (groups_df[3])))
 		self.lb_n_groups.setText(str(len(self.total_per_group)))
 		#print(self.total_per_group)
+
+		"""
+			Gets start and end of lower and upper percentiles
+			Use permutations to know how many groups are there
+		"""
+
+		range_lower_start = index_lower + 4 + len(self.total_per_group)
+		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
+		print(range_lower_start, range_lower_end)
+
+		range_upper_start = index_upper + 4 + len(self.total_per_group)
+		range_upper_end = range_upper_start + len(list(permutations(range(len(self.total_per_group)),2)))
+		print(range_upper_start, range_upper_end)
+
+		"""
+			This must be executed once (searching how to delete csv file)
+			Creates groups csv file
+		"""	
+
+		with open(path, 'r') as origin_file:
+			for line in islice(origin_file, range_lower_start, range_lower_end):
+				with open('lower_percentiles.csv','a') as lower_file:
+					#print(re.sub("\s+",",", line.strip()))
+					lower_file.write(re.sub("\s+",",", line.strip())+ '\n')
+
+		with open(path, 'r') as origin_file:
+			for line in islice(origin_file, range_upper_start, range_upper_end):
+				with open('upper_percentiles.csv','a') as upper_file:
+					#print(re.sub("\s+",",", line.strip()))
+					upper_file.write(re.sub("\s+",",", line.strip())+ '\n')
 
 
 	def generate_dataframe(self):
