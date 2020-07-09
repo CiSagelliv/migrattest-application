@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt5.QtWidgets import QPushButton, QTextEdit, QLabel, QFileDialog, QPlainTextEdit, QTableWidget
 #Other libraries 
 import sys
+import os
 
 class main_window(QDialog):
 	def __init__(self):
@@ -38,26 +39,36 @@ class main_window(QDialog):
             font-family: "Lucida Console", Courier, monospace;
             font-size: 14px;
 		}
+		QLabel#selected_file{
+            font-family: "Lucida Console", Courier, monospace;
+            font-size: 10px;
+		}
 		"""
 
 		self.setStyleSheet(self.stylesheet)
 		self.show()
 
+	"""
+		Interface basic elements
+
+	"""
+
 	def head(self):
 		btn_open_file = QPushButton("Open file", self)
-		#btn_open_file.clicked.connect(self.go_to_open)
+		btn_open_file.clicked.connect(self.go_to_open)
 
-		lb_selected_file = QLabel("File title", self)
+		self.lb_selected_file = QLabel("File path")
+		self.lb_selected_file.setObjectName("selected_file")
 
 		lb_n_groups = QLabel("N° groups", self)
 
 		btn_generate_dataframe = QPushButton("Generate dataframe", self)
 		btn_generate_dataframe.setObjectName("generate_dataframe")
-		#btn_generate_dataframe.clicked.connect(self.go_to_dataframe)
+		btn_generate_dataframe.clicked.connect(self.generate_dataframe)
 
 		head_layout = QHBoxLayout()
 		head_layout.addWidget(btn_open_file)
-		head_layout.addWidget(lb_selected_file)
+		head_layout.addWidget(self.lb_selected_file)
 		head_layout.addWidget(lb_n_groups)
 		head_layout.addWidget(btn_generate_dataframe)
 
@@ -77,7 +88,7 @@ class main_window(QDialog):
 
 	def results(self):
 		btn_get_results = QPushButton("Results", self)
-		#btn_get_results.clicked.connect(self.go_to_results)
+		btn_get_results.clicked.connect(self.get_results)
 
 		txt_results = QPlainTextEdit()
 
@@ -86,6 +97,25 @@ class main_window(QDialog):
 		results_layout.addWidget(txt_results)
 
 		return results_layout
+
+	"""
+		A partir de aquí se codifica la funcionalidad
+	"""
+
+	def go_to_open(self):
+		filename = QFileDialog.getOpenFileName()
+		path = filename[0]
+		print(path)
+
+		with open(path, 'r') as origin_file:
+			self.lb_selected_file.setText(path)
+			#print(origin_file.readline())
+
+	def generate_dataframe(self):
+		pass
+
+	def get_results(self):
+		pass
 
 
 if __name__ == '__main__':
