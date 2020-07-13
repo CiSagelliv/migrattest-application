@@ -68,7 +68,7 @@ class main_window(QDialog):
 
 		self.lb_n_groups = QLabel("N° groups", self)
 
-		btn_generate_dataframe = QPushButton("Generate dataframe", self)
+		btn_generate_dataframe = QPushButton("Run", self)
 		btn_generate_dataframe.setObjectName("generate_dataframe")
 		btn_generate_dataframe.clicked.connect(self.generate_dataframe)
 
@@ -97,11 +97,15 @@ class main_window(QDialog):
 		btn_get_results = QPushButton("Results", self)
 		btn_get_results.clicked.connect(self.get_results)
 
+		btn_to_pdf = QPushButton("Export PDF", self)
+		btn_to_pdf.clicked.connect(self.df_to_pdf)
+
 		txt_results = QPlainTextEdit()
 
 		results_layout = QHBoxLayout()
 		results_layout.addWidget(btn_get_results)
 		results_layout.addWidget(txt_results)
+		results_layout.addWidget(btn_to_pdf)
 
 		return results_layout
 
@@ -181,6 +185,9 @@ class main_window(QDialog):
 			Creates groups csv file
 		"""	
 
+
+
+
 		with open(path, 'r') as origin_file:
 			for line in islice(origin_file, start_index_group + 4, end_index_group):
 				with open('groups.csv','a') as group_file:
@@ -223,7 +230,7 @@ class main_window(QDialog):
 
 		"""
 			This must be executed once (searching how to delete csv file)
-			Creates groups csv file
+			Creates lower and upper percentiles csv file
 		"""	
 
 		with open(path, 'r') as origin_file:
@@ -243,6 +250,9 @@ class main_window(QDialog):
 		pass
 
 	def get_results(self):
+		pass
+
+	def df_to_pdf(self):
 		pass
 
 
