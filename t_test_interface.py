@@ -210,13 +210,44 @@ class main_window(QDialog):
 					upper_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 	def generate_dataframe(self):
-		lower_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_2}.csv", header=None)
+		lower_df = pd.read_csv(f"{self.lower_percentiles_filename}{self.index_2}.csv", header=None)
 		lower_df.columns = ['Pairs','P1','P2','P3','P4','MLE']
 
 		upper_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_3}.csv", header=None)
 		upper_df.columns = ['Pairs','MLE','P5','P6','P7','P8']
 
-		print(lower_df, upper_df)
+		"""
+			- Delete repeated columns
+			- Create percentiles dataframe (concat lower and upper dataframe)
+			- Delete all * from every row
+			- Change dataframe data type (object to numeric)
+		"""
+
+		upper_df = upper_df.drop(['MLE'], axis=1)
+		upper_df = upper_df.drop(['Pairs'], axis=1)
+
+		percentiles_df = pd.concat([lower_df, upper_df], axis=1)
+
+		percentiles_df['P1'] = percentiles_df['P1'].str.replace('*','')
+		percentiles_df['P2'] = percentiles_df['P2'].str.replace('*','')
+		percentiles_df['P3'] = percentiles_df['P3'].str.replace('*','')
+		percentiles_df['P4'] = percentiles_df['P4'].str.replace('*','')
+		percentiles_df['P5'] = percentiles_df['P5'].str.replace('*','')
+		percentiles_df['P6'] = percentiles_df['P6'].str.replace('*','')
+		percentiles_df['P7'] = percentiles_df['P7'].str.replace('*','')
+		percentiles_df['P8'] = percentiles_df['P8'].str.replace('*','')
+
+		percentiles_df['P1'] = pd.to_numeric(percentiles_df['P1'], errors='coerce')
+		percentiles_df['P2'] = pd.to_numeric(percentiles_df['P2'], errors='coerce')
+		percentiles_df['P3'] = pd.to_numeric(percentiles_df['P3'], errors='coerce')
+		percentiles_df['P4'] = pd.to_numeric(percentiles_df['P4'], errors='coerce')
+		percentiles_df['P5'] = pd.to_numeric(percentiles_df['P5'], errors='coerce')
+		percentiles_df['P6'] = pd.to_numeric(percentiles_df['P6'], errors='coerce')
+		percentiles_df['P7'] = pd.to_numeric(percentiles_df['P7'], errors='coerce')
+		percentiles_df['P8'] = pd.to_numeric(percentiles_df['P8'], errors='coerce')
+		percentiles_df['MLE'] = pd.to_numeric(percentiles_df['MLE'], errors='coerce')
+
+		print(lower_df,'\n', upper_df,'\n', percentiles_df)
 
 	def get_results(self):
 		pass
