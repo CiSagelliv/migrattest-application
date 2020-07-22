@@ -2,7 +2,8 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDialog
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
-from PyQt5.QtWidgets import QPushButton, QTextEdit, QLabel, QFileDialog, QPlainTextEdit, QTableWidget
+from PyQt5.QtWidgets import QPushButton, QTextEdit, QLabel, QFileDialog, QPlainTextEdit
+from PyQt5.QtWidgets import QTableWidget, QScrollArea, QTableWidgetItem
 #Other libraries
 import sys
 import os
@@ -86,11 +87,11 @@ class main_window(QDialog):
 		lb_dataframe = QLabel("General" + '\n' + "dataframe")
 		lb_dataframe.setObjectName("lb_1")
 
-		dataframe_table = QTableWidget()
+		self.dataframe_table = QTableWidget()
 
 		middle_layout = QHBoxLayout()
 		middle_layout.addWidget(lb_dataframe)
-		middle_layout.addWidget(dataframe_table)
+		middle_layout.addWidget(self.dataframe_table)
 
 		return middle_layout
 
@@ -226,28 +227,38 @@ class main_window(QDialog):
 		upper_df = upper_df.drop(['MLE'], axis=1)
 		upper_df = upper_df.drop(['Pairs'], axis=1)
 
-		percentiles_df = pd.concat([lower_df, upper_df], axis=1)
+		self.percentiles_df = pd.concat([lower_df, upper_df], axis=1)
 
-		percentiles_df['P1'] = percentiles_df['P1'].str.replace('*','')
-		percentiles_df['P2'] = percentiles_df['P2'].str.replace('*','')
-		percentiles_df['P3'] = percentiles_df['P3'].str.replace('*','')
-		percentiles_df['P4'] = percentiles_df['P4'].str.replace('*','')
-		percentiles_df['P5'] = percentiles_df['P5'].str.replace('*','')
-		percentiles_df['P6'] = percentiles_df['P6'].str.replace('*','')
-		percentiles_df['P7'] = percentiles_df['P7'].str.replace('*','')
-		percentiles_df['P8'] = percentiles_df['P8'].str.replace('*','')
+		self.percentiles_df['P1'] = self.percentiles_df['P1'].str.replace('*','')
+		self.percentiles_df['P2'] = self.percentiles_df['P2'].str.replace('*','')
+		self.percentiles_df['P3'] = self.percentiles_df['P3'].str.replace('*','')
+		self.percentiles_df['P4'] = self.percentiles_df['P4'].str.replace('*','')
+		self.percentiles_df['P5'] = self.percentiles_df['P5'].str.replace('*','')
+		self.percentiles_df['P6'] = self.percentiles_df['P6'].str.replace('*','')
+		self.percentiles_df['P7'] = self.percentiles_df['P7'].str.replace('*','')
+		self.percentiles_df['P8'] = self.percentiles_df['P8'].str.replace('*','')
 
-		percentiles_df['P1'] = pd.to_numeric(percentiles_df['P1'], errors='coerce')
-		percentiles_df['P2'] = pd.to_numeric(percentiles_df['P2'], errors='coerce')
-		percentiles_df['P3'] = pd.to_numeric(percentiles_df['P3'], errors='coerce')
-		percentiles_df['P4'] = pd.to_numeric(percentiles_df['P4'], errors='coerce')
-		percentiles_df['P5'] = pd.to_numeric(percentiles_df['P5'], errors='coerce')
-		percentiles_df['P6'] = pd.to_numeric(percentiles_df['P6'], errors='coerce')
-		percentiles_df['P7'] = pd.to_numeric(percentiles_df['P7'], errors='coerce')
-		percentiles_df['P8'] = pd.to_numeric(percentiles_df['P8'], errors='coerce')
-		percentiles_df['MLE'] = pd.to_numeric(percentiles_df['MLE'], errors='coerce')
+		self.percentiles_df['P1'] = pd.to_numeric(self.percentiles_df['P1'], errors='coerce')
+		self.percentiles_df['P2'] = pd.to_numeric(self.percentiles_df['P2'], errors='coerce')
+		self.percentiles_df['P3'] = pd.to_numeric(self.percentiles_df['P3'], errors='coerce')
+		self.percentiles_df['P4'] = pd.to_numeric(self.percentiles_df['P4'], errors='coerce')
+		self.percentiles_df['P5'] = pd.to_numeric(self.percentiles_df['P5'], errors='coerce')
+		self.percentiles_df['P6'] = pd.to_numeric(self.percentiles_df['P6'], errors='coerce')
+		self.percentiles_df['P7'] = pd.to_numeric(self.percentiles_df['P7'], errors='coerce')
+		self.percentiles_df['P8'] = pd.to_numeric(self.percentiles_df['P8'], errors='coerce')
+		self.percentiles_df['MLE'] = pd.to_numeric(self.percentiles_df['MLE'], errors='coerce')
 
-		print(lower_df,'\n', upper_df,'\n', percentiles_df)
+		"""
+			Shows dataframe
+		"""
+
+		self.dataframe_table.setColumnCount(len(self.percentiles_df.columns))
+		self.dataframe_table.setRowCount(len(self.percentiles_df.index))
+		for rows in range(len(self.percentiles_df.index)):
+			for columns in range(len(self.percentiles_df.columns)):
+				self.dataframe_table.setItem(rows, columns, QTableWidgetItem(str(self.percentiles_df.iloc[rows, columns])))
+
+		print(lower_df,'\n', upper_df,'\n', self.percentiles_df)
 
 	def get_results(self):
 		pass
