@@ -179,14 +179,14 @@ class main_window(QDialog):
 		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
 		#print(range_lower_start, range_lower_end)
 
-		lower_percentiles_filename = 'lower_percentiles'
-		index_2 = 0
+		self.lower_percentiles_filename = 'lower_percentiles'
+		self.index_2 = 0
 
-		while os.path.exists(f"{lower_percentiles_filename}{index_2}.csv"):
-			index_2 += 1
+		while os.path.exists(f"{self.lower_percentiles_filename}{self.index_2}.csv"):
+			self.index_2 += 1
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_lower_start, range_lower_end):
-				with open(f"{lower_percentiles_filename}{index_2}.csv",'a') as lower_file:
+				with open(f"{self.lower_percentiles_filename}{self.index_2}.csv",'a') as lower_file:
 					#print(re.sub("\s+", ",", line.strip()))
 					lower_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
@@ -198,22 +198,25 @@ class main_window(QDialog):
 		range_upper_end = range_upper_start + len(list(permutations(range(len(self.total_per_group)),2)))
 		#print(range_upper_start, range_upper_end)
 
-		upper_percentiles_filename = 'upper_percentiles'
-		index_3 = 0
+		self.upper_percentiles_filename = 'upper_percentiles'
+		self.index_3 = 0
 
-		while os.path.exists(f"{upper_percentiles_filename}{index_3}.csv"):
-			index_3 += 1
+		while os.path.exists(f"{self.upper_percentiles_filename}{self.index_3}.csv"):
+			self.index_3 += 1
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_upper_start, range_upper_end):
-				with open(f"{upper_percentiles_filename}{index_3}.csv", 'a') as upper_file:
+				with open(f"{self.upper_percentiles_filename}{self.index_3}.csv", 'a') as upper_file:
 					#print(re.sub("\s+", ",", line.strip()))
 					upper_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 	def generate_dataframe(self):
-		print(self.list_of_indexes[0]-1)
-		print(self.list_of_indexes[1]-1)
-		print(self.list_of_indexes[2]-1)
-		print(self.list_of_indexes[3]-1)
+		lower_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_2}.csv", header=None)
+		lower_df.columns = ['Pairs','P1','P2','P3','P4','MLE']
+
+		upper_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_3}.csv", header=None)
+		upper_df.columns = ['Pairs','MLE','P5','P6','P7','P8']
+
+		print(lower_df, upper_df)
 
 	def get_results(self):
 		pass
