@@ -111,7 +111,9 @@ class main_window(QDialog):
 		return results_layout
 
 	"""
-		A partir de aquí se codifica la funcionalidad
+	- Opens migrate's txt files
+	- Find key words and its index in txt file and append the results into a list
+	- Creates different csv files (groups, lower and upper percentiles) for each program's iteration
 	"""
 
 	def go_to_open(self):
@@ -120,8 +122,6 @@ class main_window(QDialog):
 
 		with open(self.path, 'r') as origin_file:
 			self.lb_selected_file.setText(self.path)
-			self.file_rows = origin_file.readlines()
-		print(self.file_rows)
 
 		line_number = 0
 		self.list_of_indexes = []
@@ -136,6 +136,10 @@ class main_window(QDialog):
 		for element in self.list_of_indexes:
 			print("Line number: ", element)
 
+		"""
+			Begins groups file creation
+		"""
+
 		groups_filename = 'groups'
 		index_1 = 0
 
@@ -144,8 +148,15 @@ class main_window(QDialog):
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, (self.list_of_indexes[0]-1) + 4, (self.list_of_indexes[1]-1)):
 				with open(f"{groups_filename}{index_1}.csv", 'a') as group_file:
-					print(re.sub("\s+",",", line.strip()))
+					#print(re.sub("\s+",",", line.strip()))
 					group_file.write(re.sub("\s+",",", line.strip()) + '\n')
+
+		"""
+			- Creates a dataframe with groups information
+			- Deletes all NaN values
+			- Deletes columns with unnecessary data (ex. locus column and missing(0))
+			- Gets the total of groups and its values (ex. Group 1 - 60) and change its data type (str to int)
+		"""
 
 		groups_df = pd.read_csv(f"{groups_filename}{index_1}.csv",header=None)
 		#Remove NaN values
@@ -154,20 +165,19 @@ class main_window(QDialog):
 		groups_df = groups_df.drop(2,1)
 		#Remove 'missing (0)' column
 		groups_df = groups_df.drop(4,1)
-		print(groups_df)
-
-		"""
-			Get total of groups and its n-value
-			Change data types str -> int
-		"""
+		#print(groups_df)
 
 		self.total_per_group = list(map(int, (groups_df[3])))
 		self.lb_n_groups.setText(str(len(self.total_per_group)))
-		print(self.total_per_group)
+		#print(self.total_per_group)
+
+		"""
+			Begins lower percentiles file creation
+		"""
 
 		range_lower_start = (self.list_of_indexes[2]-1) + 4 + len(self.total_per_group)
 		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
-		print(range_lower_start, range_lower_end)
+		#print(range_lower_start, range_lower_end)
 
 		lower_percentiles_filename = 'lower_percentiles'
 		index_2 = 0
@@ -177,12 +187,16 @@ class main_window(QDialog):
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_lower_start, range_lower_end):
 				with open(f"{lower_percentiles_filename}{index_2}.csv",'a') as lower_file:
-					print(re.sub("\s+", ",", line.strip()))
+					#print(re.sub("\s+", ",", line.strip()))
 					lower_file.write(re.sub("\s+", ",", line.strip()) + '\n')
+
+		"""
+			Begins upper percentiles file creation
+		"""
 
 		range_upper_start = (self.list_of_indexes[3]-1) + 4 + len(self.total_per_group)
 		range_upper_end = range_upper_start + len(list(permutations(range(len(self.total_per_group)),2)))
-		print(range_upper_start, range_upper_end)
+		#print(range_upper_start, range_upper_end)
 
 		upper_percentiles_filename = 'upper_percentiles'
 		index_3 = 0
@@ -192,7 +206,7 @@ class main_window(QDialog):
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_upper_start, range_upper_end):
 				with open(f"{upper_percentiles_filename}{index_3}.csv", 'a') as upper_file:
-					print(re.sub("\s+", ",", line.strip()))
+					#print(re.sub("\s+", ",", line.strip()))
 					upper_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 	def generate_dataframe(self):
