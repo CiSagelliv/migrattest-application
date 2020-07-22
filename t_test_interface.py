@@ -287,7 +287,17 @@ class main_window(QDialog):
 
 		#print(first_element_list, len(first_element_list))
 
-		#print(mixed_percentiles)
+		"""
+			Get pairs second element repeating total_per_group items list
+		"""
+
+		second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
+		#print(second_element_list)
+
+		mixed_percentiles['First_total'] = first_element_list
+		mixed_percentiles['Second_total'] = second_element_list
+
+		print(mixed_percentiles)
 
 	def df_to_pdf(self):
 		pass
