@@ -12,6 +12,9 @@ from itertools import islice
 from itertools import permutations
 from itertools import combinations
 import pandas as pd
+import numpy as np
+from scipy.stats import ttest_ind_from_stats
+from scipy.special import stdtr
 
 
 class main_window(QDialog):
@@ -296,6 +299,13 @@ class main_window(QDialog):
 
 		mixed_percentiles['First_total'] = first_element_list
 		mixed_percentiles['Second_total'] = second_element_list
+
+		mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
+		mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+
+		mixed_percentiles['Var_1'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
+		mixed_percentiles['Var_2'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
+		mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
 
 		print(mixed_percentiles)
 
