@@ -106,11 +106,11 @@ class main_window(QDialog):
 		btn_to_pdf = QPushButton("Export PDF", self)
 		btn_to_pdf.clicked.connect(self.df_to_pdf)
 
-		txt_results = QPlainTextEdit()
+		self.results_table = QTableWidget()
 
 		results_layout = QHBoxLayout()
 		results_layout.addWidget(btn_get_results)
-		results_layout.addWidget(txt_results)
+		results_layout.addWidget(self.results_table)
 		results_layout.addWidget(btn_to_pdf)
 
 		return results_layout
@@ -308,6 +308,20 @@ class main_window(QDialog):
 		mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
 
 		print(mixed_percentiles)
+
+		result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+
+		"""
+			Shows dataframe
+		"""
+
+		self.results_table.setColumnCount(len(result_df.columns))
+		self.results_table.setRowCount(len(result_df.index))
+		for rows_1 in range(len(result_df.index)):
+			for columns_1 in range(len(result_df.columns)):
+				self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(result_df.iloc[rows_1, columns_1])))
+
+		print(result_df)
 
 	def df_to_pdf(self):
 		pass
