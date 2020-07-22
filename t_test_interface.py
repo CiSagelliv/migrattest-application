@@ -10,6 +10,7 @@ import os
 import re
 from itertools import islice
 from itertools import permutations
+from itertools import combinations
 import pandas as pd
 
 
@@ -261,7 +262,32 @@ class main_window(QDialog):
 		print(lower_df,'\n', upper_df,'\n', self.percentiles_df)
 
 	def get_results(self):
-		pass
+		"""
+			Get the sum of significant percentiles rows
+		"""
+
+		mixed_percentiles = self.percentiles_df[['Pairs','P3','MLE','P6']]
+		mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
+
+		"""
+			Get pairs first total element (ex. M_21, 2 -> 32) using combinations, it use lenght
+			of total_per_group -1 because it excludes one element.
+			Then reverse the list to start from the last item, it is necessary to create a list
+			with our result because it returns a tuple's list
+		"""
+
+		first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+		first_element.reverse()
+
+		first_element_list = []
+
+		for tuple_element in first_element:
+			for list_element in tuple_element:
+				first_element_list.append(list_element)
+
+		#print(first_element_list, len(first_element_list))
+
+		#print(mixed_percentiles)
 
 	def df_to_pdf(self):
 		pass
