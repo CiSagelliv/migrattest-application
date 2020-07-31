@@ -103,14 +103,19 @@ class main_window(QDialog):
 	def choose_percentiles(self):
 		lb_choose = QLabel("Select percentiles:")
 
-		self.first_percentiles_pair = QRadioButton()
-		self.first_percentiles_pair.setText('[Default (0.005 - 0.995)]')
-		self.second_percentiles_pair = QRadioButton()
+		self.first_percentiles_pair = QRadioButton(self)
+		self.first_percentiles_pair.setText('[0.005 - 0.995]')
+		self.second_percentiles_pair = QRadioButton(self)
 		self.second_percentiles_pair.setText('[0.025 - 0.975]')
-		self.third_percentiles_pair = QRadioButton()
-		self.third_percentiles_pair.setText('[0.050 - 0.950]')
-		self.fourth_percentiles_pair = QRadioButton()
+		self.third_percentiles_pair = QRadioButton(self)
+		self.third_percentiles_pair.setText('[Default (0.050 - 0.950)]')
+		self.fourth_percentiles_pair = QRadioButton(self)
 		self.fourth_percentiles_pair.setText('[0. 250 - 0.750]')
+
+		"""self.first_percentiles_pair.toggled.connect(self.first_selected)
+		self.second_percentiles_pair.toggled.connect(self.second_selected)
+		self.third_percentiles_pair.toggled.connect(self.third_selected)
+		self.fourth_percentiles_pair.toggled.connect(self.fourth_selected)"""
 
 		percentiles_layout = QHBoxLayout()
 		percentiles_layout.addWidget(lb_choose)
@@ -297,60 +302,150 @@ class main_window(QDialog):
 			Get the sum of significant percentiles rows
 		"""
 
-		mixed_percentiles = self.percentiles_df[['Pairs','P3','MLE','P6']]
-		mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
+		if self.first_percentiles_pair.isChecked():
+			mixed_percentiles = self.percentiles_df[['Pairs','P1','P8','MLE']]
+			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
-		"""
-			Get pairs first total element (ex. M_21, 2 -> 32) using combinations, it use lenght
-			of total_per_group -1 because it excludes one element.
-			Then reverse the list to start from the last item, it is necessary to create a list
-			with our result because it returns a tuple's list
-		"""
+			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+			first_element.reverse()
 
-		first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
-		first_element.reverse()
+			first_element_list = []
 
-		first_element_list = []
+			for tuple_element in first_element:
+				for list_element in tuple_element:
+					first_element_list.append(list_element)
 
-		for tuple_element in first_element:
-			for list_element in tuple_element:
-				first_element_list.append(list_element)
+			second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
 
-		#print(first_element_list, len(first_element_list))
+			mixed_percentiles['First_total'] = first_element_list
+			mixed_percentiles['Second_total'] = second_element_list
 
-		"""
-			Get pairs second element repeating total_per_group items list
-		"""
+			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
+			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
 
-		second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
-		#print(second_element_list)
+			mixed_percentiles['Var_1'] = (((mixed_percentiles['P1'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P8'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
+			mixed_percentiles['Var_2'] = (((mixed_percentiles['P1'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P8'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
+			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
 
-		mixed_percentiles['First_total'] = first_element_list
-		mixed_percentiles['Second_total'] = second_element_list
+			print(mixed_percentiles)
 
-		mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
-		mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
 
-		mixed_percentiles['Var_1'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
-		mixed_percentiles['Var_2'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
-		mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
+			self.results_table.setColumnCount(len(self.result_df.columns))
+			self.results_table.setRowCount(len(self.result_df.index))
+			for rows_1 in range(len(self.result_df.index)):
+				for columns_1 in range(len(self.result_df.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			self.results_table.resizeColumnsToContents()
 
-		print(mixed_percentiles)
+		elif self.second_percentiles_pair.isChecked():
+			mixed_percentiles = self.percentiles_df[['Pairs','P2','P7','MLE']]
+			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
-		self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+			first_element.reverse()
 
-		"""
-			Shows dataframe
-		"""
+			first_element_list = []
 
-		self.results_table.setColumnCount(len(self.result_df.columns))
-		self.results_table.setRowCount(len(self.result_df.index))
-		for rows_1 in range(len(self.result_df.index)):
-			for columns_1 in range(len(self.result_df.columns)):
-				self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
-		self.results_table.resizeColumnsToContents()
+			for tuple_element in first_element:
+				for list_element in tuple_element:
+					first_element_list.append(list_element)
 
-		print(self.result_df)
+			second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
+
+			mixed_percentiles['First_total'] = first_element_list
+			mixed_percentiles['Second_total'] = second_element_list
+
+			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
+			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+
+			mixed_percentiles['Var_1'] = (((mixed_percentiles['P2'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P7'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
+			mixed_percentiles['Var_2'] = (((mixed_percentiles['P2'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P7'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
+			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
+
+			print(mixed_percentiles)
+
+			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+
+			self.results_table.setColumnCount(len(self.result_df.columns))
+			self.results_table.setRowCount(len(self.result_df.index))
+			for rows_1 in range(len(self.result_df.index)):
+				for columns_1 in range(len(self.result_df.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			self.results_table.resizeColumnsToContents()
+
+		elif self.third_percentiles_pair.isChecked():
+			mixed_percentiles = self.percentiles_df[['Pairs','P3','P6','MLE']]
+			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
+
+			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+			first_element.reverse()
+
+			first_element_list = []
+
+			for tuple_element in first_element:
+				for list_element in tuple_element:
+					first_element_list.append(list_element)
+
+			second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
+
+			mixed_percentiles['First_total'] = first_element_list
+			mixed_percentiles['Second_total'] = second_element_list
+
+			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
+			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+
+			mixed_percentiles['Var_1'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
+			mixed_percentiles['Var_2'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
+			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
+
+			print(mixed_percentiles)
+
+			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+
+			self.results_table.setColumnCount(len(self.result_df.columns))
+			self.results_table.setRowCount(len(self.result_df.index))
+			for rows_1 in range(len(self.result_df.index)):
+				for columns_1 in range(len(self.result_df.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			self.results_table.resizeColumnsToContents()
+
+		elif self.fourth_percentiles_pair.isChecked():
+			mixed_percentiles = self.percentiles_df[['Pairs','P4','P5','MLE']]
+			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
+
+			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+			first_element.reverse()
+
+			first_element_list = []
+
+			for tuple_element in first_element:
+				for list_element in tuple_element:
+					first_element_list.append(list_element)
+
+			second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
+
+			mixed_percentiles['First_total'] = first_element_list
+			mixed_percentiles['Second_total'] = second_element_list
+
+			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
+			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+
+			mixed_percentiles['Var_1'] = (((mixed_percentiles['P4'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P5'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
+			mixed_percentiles['Var_2'] = (((mixed_percentiles['P4'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P5'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
+			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
+
+			print(mixed_percentiles)
+
+			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+
+			self.results_table.setColumnCount(len(self.result_df.columns))
+			self.results_table.setRowCount(len(self.result_df.index))
+			for rows_1 in range(len(self.result_df.index)):
+				for columns_1 in range(len(self.result_df.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			self.results_table.resizeColumnsToContents()
+
 
 	def df_to_file(self):
 		results_filename = 'results'
@@ -359,6 +454,7 @@ class main_window(QDialog):
 		while os.path.exists(f"{results_filename}{index_4}.csv"):
 			index_4 += 1
 		self.result_df.to_csv(f"{results_filename}{index_4}.csv",encoding='utf-8', index=False)
+
 
 
 if __name__ == '__main__':
