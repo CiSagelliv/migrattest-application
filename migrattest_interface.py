@@ -93,7 +93,7 @@ class main_window(QDialog):
 		return head_layout
 
 	def percentiles_labels(self):
-		lb_percentiles = QLabel("  Pairs  |    0.005    |    0.025    |    0.050    |    0.250    |    0.750    |    0.950    |    0.975    |  0.995")
+		lb_percentiles = QLabel("     Pairs  |   0.005   |   0.025   |   0.050   |   0.250   |   0.750   |   0.950   |   0.975   |  0.995")
 		lb_percentiles.setObjectName("percentiles_labels")
 
 		percentiles_labels_layout = QHBoxLayout()
