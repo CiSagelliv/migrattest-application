@@ -29,6 +29,7 @@ class main_window(QDialog):
 
 		self.setLayout(QVBoxLayout())
 		self.layout().addLayout(self.head())
+		self.layout().addLayout(self.percentiles_labels())
 		self.layout().addLayout(self.middle())
 		self.layout().addLayout(self.choose_percentiles())
 		self.layout().addLayout(self.results())
@@ -53,6 +54,9 @@ class main_window(QDialog):
 		QLabel#selected_file{
             font-family: "Lucida Console", Courier, monospace;
             font-size: 15px;
+		}
+		QLabel#percentiles_labels{
+			font-size: 20px;
 		}
 		"""
 
@@ -88,14 +92,23 @@ class main_window(QDialog):
 
 		return head_layout
 
+	def percentiles_labels(self):
+		lb_percentiles = QLabel("  Pairs  |    0.005    |    0.025    |    0.050    |    0.250    |    0.750    |    0.950    |    0.975    |  0.995")
+		lb_percentiles.setObjectName("percentiles_labels")
+
+		percentiles_labels_layout = QHBoxLayout()
+		percentiles_labels_layout.addWidget(lb_percentiles)
+
+		return percentiles_labels_layout
+
 	def middle(self):
-		lb_dataframe = QLabel("General" + '\n' + "dataframe")
-		lb_dataframe.setObjectName("lb_1")
+		#lb_dataframe = QLabel("General" + '\n' + "dataframe")
+		#lb_dataframe.setObjectName("lb_1")
 
 		self.dataframe_table = QTableWidget()
 
 		middle_layout = QHBoxLayout()
-		middle_layout.addWidget(lb_dataframe)
+		#middle_layout.addWidget(lb_dataframe)
 		middle_layout.addWidget(self.dataframe_table)
 
 		return middle_layout
