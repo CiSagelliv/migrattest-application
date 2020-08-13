@@ -389,6 +389,7 @@ class main_window(QDialog):
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
+			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -469,6 +470,7 @@ class main_window(QDialog):
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
+			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -550,6 +552,7 @@ class main_window(QDialog):
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
+			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -630,6 +633,7 @@ class main_window(QDialog):
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
+			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -712,6 +716,7 @@ class main_window(QDialog):
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
+			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
