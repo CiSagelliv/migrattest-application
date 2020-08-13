@@ -75,9 +75,9 @@ class main_window(QDialog):
 		self.lb_selected_file = QLabel("File path")
 		self.lb_selected_file.setObjectName("selected_file")
 
-		lb_title_groups = QLabel("Groups:", self)
+		lb_title_groups = QLabel("Populations:", self)
 
-		self.lb_n_groups = QLabel("N° groups", self)
+		self.lb_n_groups = QLabel("...", self)
 
 		btn_generate_dataframe = QPushButton("Run", self)
 		btn_generate_dataframe.setObjectName("generate_dataframe")
@@ -317,7 +317,7 @@ class main_window(QDialog):
 
 		if self.first_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Pairs','P1','P8','MLE']]
-			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
+			#mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -333,16 +333,46 @@ class main_window(QDialog):
 			mixed_percentiles['First_total'] = first_element_list
 			mixed_percentiles['Second_total'] = second_element_list
 
-			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
-			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
-
-			mixed_percentiles['Var_1'] = (((mixed_percentiles['P1'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P8'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
-			mixed_percentiles['Var_2'] = (((mixed_percentiles['P1'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P8'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
-			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
-
 			print(mixed_percentiles)
 
-			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+			n_permutations = len(list(permutations(range(len(self.total_per_group)),2)))
+			steps = len(self.total_per_group) - 1
+			start = len(self.total_per_group) - 1
+			second_pair = []
+
+			for i in range(0, steps):
+				start = i * steps + steps + i
+				for j in range(start, n_permutations, steps):
+					second_pair.append(j)
+
+			n_permutations_list = list(range(0, n_permutations))
+
+			n_total = n_permutations_list
+			n_populations = len(self.total_per_group)
+			len_n, n_size = len(n_total), len(n_total)//n_populations
+			to_array = []
+
+			for a in range(0, len_n, n_size):
+				to_array.append(n_total[a:a+n_size])
+
+			to_matrix = np.array([item for item in to_array])
+			secondary_diagonal = (to_matrix[np.triu_indices(len(self.total_per_group)-1)]).tolist()
+
+			half_n_permutations = int(n_permutations/2)
+			to_df = []
+
+			for n in range(half_n_permutations):
+				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
+
+
+			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P1','P8','MLE','First_total','Second_total'])
+
+			self.result_df['P1'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
+			self.result_df['P8'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -353,7 +383,6 @@ class main_window(QDialog):
 
 		elif self.second_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Pairs','P2','P7','MLE']]
-			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -369,16 +398,46 @@ class main_window(QDialog):
 			mixed_percentiles['First_total'] = first_element_list
 			mixed_percentiles['Second_total'] = second_element_list
 
-			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
-			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
-
-			mixed_percentiles['Var_1'] = (((mixed_percentiles['P2'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P7'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
-			mixed_percentiles['Var_2'] = (((mixed_percentiles['P2'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P7'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
-			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
-
 			print(mixed_percentiles)
 
-			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+			n_permutations = len(list(permutations(range(len(self.total_per_group)),2)))
+			steps = len(self.total_per_group) - 1
+			start = len(self.total_per_group) - 1
+			second_pair = []
+
+			for i in range(0, steps):
+				start = i * steps + steps + i
+				for j in range(start, n_permutations, steps):
+					second_pair.append(j)
+
+			n_permutations_list = list(range(0, n_permutations))
+
+			n_total = n_permutations_list
+			n_populations = len(self.total_per_group)
+			len_n, n_size = len(n_total), len(n_total)//n_populations
+			to_array = []
+
+			for a in range(0, len_n, n_size):
+				to_array.append(n_total[a:a+n_size])
+
+			to_matrix = np.array([item for item in to_array])
+			secondary_diagonal = (to_matrix[np.triu_indices(len(self.total_per_group)-1)]).tolist()
+
+			half_n_permutations = int(n_permutations/2)
+			to_df = []
+
+			for n in range(half_n_permutations):
+				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
+
+
+			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P2','P7','MLE','First_total','Second_total'])
+
+			self.result_df['P2'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
+			self.result_df['P7'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -389,7 +448,6 @@ class main_window(QDialog):
 
 		elif self.third_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Pairs','P3','P6','MLE']]
-			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -405,16 +463,47 @@ class main_window(QDialog):
 			mixed_percentiles['First_total'] = first_element_list
 			mixed_percentiles['Second_total'] = second_element_list
 
-			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
-			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
-
-			mixed_percentiles['Var_1'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
-			mixed_percentiles['Var_2'] = (((mixed_percentiles['P3'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P6'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
-			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
-
 			print(mixed_percentiles)
 
-			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+			n_permutations = len(list(permutations(range(len(self.total_per_group)),2)))
+			steps = len(self.total_per_group) - 1
+			start = len(self.total_per_group) - 1
+			second_pair = []
+
+			for i in range(0, steps):
+				start = i * steps + steps + i
+				for j in range(start, n_permutations, steps):
+					second_pair.append(j)
+
+			n_permutations_list = list(range(0, n_permutations))
+
+			n_total = n_permutations_list
+			n_populations = len(self.total_per_group)
+			len_n, n_size = len(n_total), len(n_total)//n_populations
+			to_array = []
+
+			for a in range(0, len_n, n_size):
+				to_array.append(n_total[a:a+n_size])
+
+			to_matrix = np.array([item for item in to_array])
+			secondary_diagonal = (to_matrix[np.triu_indices(len(self.total_per_group)-1)]).tolist()
+
+			half_n_permutations = int(n_permutations/2)
+			to_df = []
+
+			for n in range(half_n_permutations):
+				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
+
+
+			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
+
+
+			self.result_df['P3'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
+			self.result_df['P6'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -425,7 +514,6 @@ class main_window(QDialog):
 
 		elif self.fourth_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Pairs','P4','P5','MLE']]
-			mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -441,16 +529,113 @@ class main_window(QDialog):
 			mixed_percentiles['First_total'] = first_element_list
 			mixed_percentiles['Second_total'] = second_element_list
 
-			mixed_percentiles['Mean_1'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['First_total']
-			mixed_percentiles['Mean_2'] = mixed_percentiles['Sum_of_values'] / mixed_percentiles['Second_total']
+			print(mixed_percentiles)
 
-			mixed_percentiles['Var_1'] = (((mixed_percentiles['P4'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['P5'] - mixed_percentiles['Mean_1'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_1'])**2)) / mixed_percentiles['First_total']
-			mixed_percentiles['Var_2'] = (((mixed_percentiles['P4'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['P5'] - mixed_percentiles['Mean_2'])**2) + ((mixed_percentiles['MLE'] - mixed_percentiles['Mean_2'])**2)) / mixed_percentiles['Second_total']
-			mixed_percentiles['t_value'], mixed_percentiles['p_value'] = ttest_ind_from_stats(mixed_percentiles['Mean_1'], np.sqrt(mixed_percentiles['Var_1']), mixed_percentiles['First_total'], mixed_percentiles['Mean_2'], np.sqrt(mixed_percentiles['Var_2']), mixed_percentiles['Second_total'], equal_var=False)
+			n_permutations = len(list(permutations(range(len(self.total_per_group)),2)))
+			steps = len(self.total_per_group) - 1
+			start = len(self.total_per_group) - 1
+			second_pair = []
+
+			for i in range(0, steps):
+				start = i * steps + steps + i
+				for j in range(start, n_permutations, steps):
+					second_pair.append(j)
+
+			n_permutations_list = list(range(0, n_permutations))
+
+			n_total = n_permutations_list
+			n_populations = len(self.total_per_group)
+			len_n, n_size = len(n_total), len(n_total)//n_populations
+			to_array = []
+
+			for a in range(0, len_n, n_size):
+				to_array.append(n_total[a:a+n_size])
+
+			to_matrix = np.array([item for item in to_array])
+			secondary_diagonal = (to_matrix[np.triu_indices(len(self.total_per_group)-1)]).tolist()
+
+			half_n_permutations = int(n_permutations/2)
+			to_df = []
+
+			for n in range(half_n_permutations):
+				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
+
+
+			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P4','P5','MLE','First_total','Second_total'])
+
+			self.result_df['P4'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
+			self.result_df['P5'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+
+			self.results_table.setColumnCount(len(self.result_df.columns))
+			self.results_table.setRowCount(len(self.result_df.index))
+			for rows_1 in range(len(self.result_df.index)):
+				for columns_1 in range(len(self.result_df.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			self.results_table.resizeColumnsToContents()
+
+		else:
+			self.third_percentiles_pair.setChecked(True)
+			mixed_percentiles = self.percentiles_df[['Pairs','P3','P6','MLE']]
+
+			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
+			first_element.reverse()
+
+			first_element_list = []
+
+			for tuple_element in first_element:
+				for list_element in tuple_element:
+					first_element_list.append(list_element)
+
+			second_element_list = [element for element in self.total_per_group for i in range(len(self.total_per_group)-1)]
+
+			mixed_percentiles['First_total'] = first_element_list
+			mixed_percentiles['Second_total'] = second_element_list
 
 			print(mixed_percentiles)
 
-			self.result_df = mixed_percentiles[['Pairs','t_value','p_value']]
+
+			n_permutations = len(list(permutations(range(len(self.total_per_group)),2)))
+			steps = len(self.total_per_group) - 1
+			start = len(self.total_per_group) - 1
+			second_pair = []
+
+			for i in range(0, steps):
+				start = i * steps + steps + i
+				for j in range(start, n_permutations, steps):
+					second_pair.append(j)
+
+			n_permutations_list = list(range(0, n_permutations))
+
+			n_total = n_permutations_list
+			n_populations = len(self.total_per_group)
+			len_n, n_size = len(n_total), len(n_total)//n_populations
+			to_array = []
+
+			for a in range(0, len_n, n_size):
+				to_array.append(n_total[a:a+n_size])
+
+			to_matrix = np.array([item for item in to_array])
+			secondary_diagonal = (to_matrix[np.triu_indices(len(self.total_per_group)-1)]).tolist()
+
+			half_n_permutations = int(n_permutations/2)
+			to_df = []
+
+			for n in range(half_n_permutations):
+				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
+
+
+			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
+
+			self.result_df['P3'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
+			self.result_df['P6'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
