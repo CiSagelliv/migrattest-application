@@ -13,6 +13,7 @@ from itertools import permutations
 from itertools import combinations
 import pandas as pd
 import numpy as np
+from scipy.stats import t
 from scipy.stats import ttest_ind_from_stats
 from scipy.special import stdtr
 
@@ -368,11 +369,26 @@ class main_window(QDialog):
 			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P1','P8','MLE','First_total','Second_total'])
 
-			self.result_df['P1'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
-			self.result_df['P8'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
-			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
-			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
-			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+			self.result_df['P1'] = pd.to_numeric(self.result_df['P1'], errors = 'coerce')
+			self.result_df['P8'] = pd.to_numeric(self.result_df['P8'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
+
+			self.result_df['Sqrt_n'] = np.sqrt(self.result_df['First_total'])
+			self.result_df['Sqrt_n_2'] = np.sqrt(self.result_df['Second_total'])
+			self.result_df['dof_1'] = self.result_df['First_total'] - 1
+			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
+			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
+			self.result_df['S_1'] = ((self.result_df['P8']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['P8']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
+			self.result_df['Var1'] = self.result_df['S_1'] ** 2
+			self.result_df['Var2'] = self.result_df['S_2'] ** 2
+			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
+			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -433,11 +449,26 @@ class main_window(QDialog):
 			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P2','P7','MLE','First_total','Second_total'])
 
-			self.result_df['P2'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
-			self.result_df['P7'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
-			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
-			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
-			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+			self.result_df['P2'] = pd.to_numeric(self.result_df['P2'], errors = 'coerce')
+			self.result_df['P7'] = pd.to_numeric(self.result_df['P7'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
+
+			self.result_df['Sqrt_n'] = np.sqrt(self.result_df['First_total'])
+			self.result_df['Sqrt_n_2'] = np.sqrt(self.result_df['Second_total'])
+			self.result_df['dof_1'] = self.result_df['First_total'] - 1
+			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
+			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
+			self.result_df['S_1'] = ((self.result_df['P7']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['P7']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
+			self.result_df['Var1'] = self.result_df['S_1'] ** 2
+			self.result_df['Var2'] = self.result_df['S_2'] ** 2
+			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
+			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -499,11 +530,26 @@ class main_window(QDialog):
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
 
 
-			self.result_df['P3'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
-			self.result_df['P6'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
-			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
-			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
-			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+			self.result_df['P3'] = pd.to_numeric(self.result_df['P3'], errors = 'coerce')
+			self.result_df['P6'] = pd.to_numeric(self.result_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
+
+			self.result_df['Sqrt_n'] = np.sqrt(self.result_df['First_total'])
+			self.result_df['Sqrt_n_2'] = np.sqrt(self.result_df['Second_total'])
+			self.result_df['dof_1'] = self.result_df['First_total'] - 1
+			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
+			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
+			self.result_df['S_1'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
+			self.result_df['Var1'] = self.result_df['S_1'] ** 2
+			self.result_df['Var2'] = self.result_df['S_2'] ** 2
+			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
+			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -564,11 +610,26 @@ class main_window(QDialog):
 			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P4','P5','MLE','First_total','Second_total'])
 
-			self.result_df['P4'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
-			self.result_df['P5'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
-			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
-			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
-			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+			self.result_df['P4'] = pd.to_numeric(self.result_df['P4'], errors = 'coerce')
+			self.result_df['P5'] = pd.to_numeric(self.result_df['P5'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
+
+			self.result_df['Sqrt_n'] = np.sqrt(self.result_df['First_total'])
+			self.result_df['Sqrt_n_2'] = np.sqrt(self.result_df['Second_total'])
+			self.result_df['dof_1'] = self.result_df['First_total'] - 1
+			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
+			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
+			self.result_df['S_1'] = ((self.result_df['P5']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['P5']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
+			self.result_df['Var1'] = self.result_df['S_1'] ** 2
+			self.result_df['Var2'] = self.result_df['S_2'] ** 2
+			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
+			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -631,11 +692,26 @@ class main_window(QDialog):
 			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
 
-			self.result_df['P3'] = pd.to_numeric(final_df['P3'], errors = 'coerce')
-			self.result_df['P6'] = pd.to_numeric(final_df['P6'], errors = 'coerce')
-			self.result_df['MLE'] = pd.to_numeric(final_df['MLE'], errors = 'coerce')
-			self.result_df['First_total'] = pd.to_numeric(final_df['First_total'], errors = 'coerce')
-			self.result_df['Second_total'] = pd.to_numeric(final_df['Second_total'], errors = 'coerce')
+			self.result_df['P3'] = pd.to_numeric(self.result_df['P3'], errors = 'coerce')
+			self.result_df['P6'] = pd.to_numeric(self.result_df['P6'], errors = 'coerce')
+			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
+			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
+			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
+
+			self.result_df['Sqrt_n'] = np.sqrt(self.result_df['First_total'])
+			self.result_df['Sqrt_n_2'] = np.sqrt(self.result_df['Second_total'])
+			self.result_df['dof_1'] = self.result_df['First_total'] - 1
+			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
+			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
+			self.result_df['S_1'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
+			self.result_df['Var1'] = self.result_df['S_1'] ** 2
+			self.result_df['Var2'] = self.result_df['S_2'] ** 2
+			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var1'])+(self.result_df['dof_2']*self.result_df['Var2']))/self.result_df['dof']
+			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
 			self.results_table.setColumnCount(len(self.result_df.columns))
 			self.results_table.setRowCount(len(self.result_df.index))
@@ -652,7 +728,6 @@ class main_window(QDialog):
 		while os.path.exists(f"{results_filename}{index_4}.csv"):
 			index_4 += 1
 		self.result_df.to_csv(f"{results_filename}{index_4}.csv",encoding='utf-8', index=False)
-
 
 
 if __name__ == '__main__':
