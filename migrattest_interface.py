@@ -33,6 +33,7 @@ class main_window(QDialog):
 		self.layout().addLayout(self.percentiles_labels())
 		self.layout().addLayout(self.middle())
 		self.layout().addLayout(self.choose_percentiles())
+		self.layout().addLayout(self.results_labels())
 		self.layout().addLayout(self.results())
 
 		self.stylesheet = """
@@ -58,6 +59,9 @@ class main_window(QDialog):
 		}
 		QLabel#percentiles_labels{
 			font-size: 20px;
+		}
+		QLabel#results_labels{
+			font-size: 15px;
 		}
 		"""
 
@@ -139,6 +143,15 @@ class main_window(QDialog):
 		percentiles_layout.addWidget(self.fourth_percentiles_pair)
 
 		return percentiles_layout
+
+	def results_labels(self):
+		lb_results = QLabel("Pairs|P-|MLE|P+|First_total|Second_total|Sqrt_n|Sqrt_n_2|dof_1|dof_2|two_tailed_1|two_tailed_2|S_1|S_2|dof|Var1|Var2|SDp|calculated_t|two_tailed_both|result")
+		lb_results.setObjectName("results_labels")
+
+		results_labels_layout = QHBoxLayout()
+		results_labels_layout.addWidget(lb_results)
+
+		return results_labels_layout
 
 	def results(self):
 		btn_get_results = QPushButton("Results", self)
