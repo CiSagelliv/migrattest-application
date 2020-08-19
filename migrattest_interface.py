@@ -98,7 +98,7 @@ class main_window(QDialog):
 		return head_layout
 
 	def percentiles_labels(self):
-		lb_percentiles = QLabel("     Pairs  |   0.005   |   0.025   |   0.050   |   0.250   |   0.750   |   0.950   |   0.975   |  0.995")
+		lb_percentiles = QLabel("     Parameter  |   0.005   |   0.025   |   0.050   |   0.250   |   0.750   |   0.950   |   0.975   |  0.995")
 		lb_percentiles.setObjectName("percentiles_labels")
 
 		percentiles_labels_layout = QHBoxLayout()
@@ -145,7 +145,7 @@ class main_window(QDialog):
 		return percentiles_layout
 
 	def results_labels(self):
-		lb_results = QLabel("Pairs|P-|MLE|P+|First_total|Second_total|Sqrt_n|Sqrt_n_2|dof_1|dof_2|two_tailed_1|two_tailed_2|S_1|S_2|dof|Var1|Var2|SDp|calculated_t|two_tailed_both|result")
+		lb_results = QLabel("Parameter|P-|MLE|P+|First_total|Second_total|Sqrt_n|Sqrt_n_2|dof_1|dof_2|two_tailed_1|two_tailed_2|S_1|S_2|dof|Var1|Var2|SDp|calculated_t|two_tailed_both|result")
 		lb_results.setObjectName("results_labels")
 
 		results_labels_layout = QHBoxLayout()
@@ -271,10 +271,10 @@ class main_window(QDialog):
 
 	def generate_dataframe(self):
 		lower_df = pd.read_csv(f"{self.lower_percentiles_filename}{self.index_2}.csv", header=None)
-		lower_df.columns = ['Pairs','P1','P2','P3','P4','MLE']
+		lower_df.columns = ['Parameter','0.005','0.025','0.050','0.250','MLE']
 
 		upper_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_3}.csv", header=None)
-		upper_df.columns = ['Pairs','MLE','P5','P6','P7','P8']
+		upper_df.columns = ['Parameter','MLE','0.750','0.950','0.975','0.995']
 
 		"""
 			- Delete repeated columns
@@ -284,43 +284,47 @@ class main_window(QDialog):
 		"""
 
 		upper_df = upper_df.drop(['MLE'], axis=1)
-		upper_df = upper_df.drop(['Pairs'], axis=1)
+		upper_df = upper_df.drop(['Parameter'], axis=1)
 
 		self.percentiles_df = pd.concat([lower_df, upper_df], axis=1)
 
 
-		columns_to_check = ['P1','P2','P3','P4','MLE','P5','P6','P7','P8']
+		columns_to_check = ['0.005','0.025','0.050','0.250','MLE','0.750','0.950','0.975','0.995']
 		self.percentiles_df[columns_to_check] = self.percentiles_df[columns_to_check].replace({'\*':''}, regex=True)
 
-		"""
-		self.percentiles_df['P1'] = self.percentiles_df['P1'].str.replace('*','')
-		self.percentiles_df['P2'] = self.percentiles_df['P2'].str.replace('*','')
-		self.percentiles_df['P3'] = self.percentiles_df['P3'].str.replace('*','')
-		self.percentiles_df['P4'] = self.percentiles_df['P4'].str.replace('*','')
-		#self.percentiles_df['P5'] = self.percentiles_df['P5'].str.replace('*','')
-		#self.percentiles_df['P6'] = self.percentiles_df['P6'].str.replace('*','')
-		#self.percentiles_df['P7'] = self.percentiles_df['P7'].str.replace('*','')
-		#self.percentiles_df['P8'] = self.percentiles_df['P8'].str.replace('*','')"""
-
-		self.percentiles_df['P1'] = pd.to_numeric(self.percentiles_df['P1'], errors='coerce')
-		self.percentiles_df['P2'] = pd.to_numeric(self.percentiles_df['P2'], errors='coerce')
-		self.percentiles_df['P3'] = pd.to_numeric(self.percentiles_df['P3'], errors='coerce')
-		self.percentiles_df['P4'] = pd.to_numeric(self.percentiles_df['P4'], errors='coerce')
-		self.percentiles_df['P5'] = pd.to_numeric(self.percentiles_df['P5'], errors='coerce')
-		self.percentiles_df['P6'] = pd.to_numeric(self.percentiles_df['P6'], errors='coerce')
-		self.percentiles_df['P7'] = pd.to_numeric(self.percentiles_df['P7'], errors='coerce')
-		self.percentiles_df['P8'] = pd.to_numeric(self.percentiles_df['P8'], errors='coerce')
+		self.percentiles_df['0.005'] = pd.to_numeric(self.percentiles_df['0.005'], errors='coerce')
+		self.percentiles_df['0.025'] = pd.to_numeric(self.percentiles_df['0.025'], errors='coerce')
+		self.percentiles_df['0.050'] = pd.to_numeric(self.percentiles_df['0.050'], errors='coerce')
+		self.percentiles_df['0.250'] = pd.to_numeric(self.percentiles_df['0.250'], errors='coerce')
+		self.percentiles_df['0.750'] = pd.to_numeric(self.percentiles_df['0.750'], errors='coerce')
+		self.percentiles_df['0.950'] = pd.to_numeric(self.percentiles_df['0.950'], errors='coerce')
+		self.percentiles_df['0.975'] = pd.to_numeric(self.percentiles_df['0.975'], errors='coerce')
+		self.percentiles_df['0.995'] = pd.to_numeric(self.percentiles_df['0.995'], errors='coerce')
 		self.percentiles_df['MLE'] = pd.to_numeric(self.percentiles_df['MLE'], errors='coerce')
+
+		df_titles = pd.DataFrame({'Parameter':'Parameter',
+                          '0.005':'0.005',
+                          '0.025':'0.025',
+                          '0.050':'0.050',
+                          '0.250':'0.250',
+                          'MLE':'MLE',
+                          '0.750':'0.750',
+                          '0.950':'0.950',
+                          '0.975':'0.975',
+                          '0.995':'0.995'}, index=[0])
+		df_with_titles = pd.concat([df_titles, self.percentiles_df]).reset_index(drop = True)
 
 		"""
 			Shows dataframe
 		"""
 
-		self.dataframe_table.setColumnCount(len(self.percentiles_df.columns))
-		self.dataframe_table.setRowCount(len(self.percentiles_df.index))
-		for rows in range(len(self.percentiles_df.index)):
-			for columns in range(len(self.percentiles_df.columns)):
-				self.dataframe_table.setItem(rows, columns, QTableWidgetItem(str(self.percentiles_df.iloc[rows, columns])))
+		self.dataframe_table.setColumnCount(len(df_with_titles.columns))
+		self.dataframe_table.setRowCount(len(df_with_titles.index))
+		for rows in range(len(df_with_titles.index)):
+			for columns in range(len(df_with_titles.columns)):
+				self.dataframe_table.setItem(rows, columns, QTableWidgetItem(str(df_with_titles.iloc[rows, columns])))
+
+		df_with_titles.style.apply(lambda x: ['background: lightyellow' if x.name in [0] else '' for i in x], axis=1)
 
 		print(lower_df,'\n', upper_df,'\n', self.percentiles_df)
 
@@ -330,7 +334,7 @@ class main_window(QDialog):
 		"""
 
 		if self.first_percentiles_pair.isChecked():
-			mixed_percentiles = self.percentiles_df[['Pairs','P1','P8','MLE']]
+			mixed_percentiles = self.percentiles_df[['Parameter','0.005','0.995','MLE']]
 			#mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
@@ -379,11 +383,11 @@ class main_window(QDialog):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
 
-			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
-			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P1','P8','MLE','First_total','Second_total'])
+			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.005','0.995','MLE','First_total','Second_total'])
 
-			self.result_df['P1'] = pd.to_numeric(self.result_df['P1'], errors = 'coerce')
-			self.result_df['P8'] = pd.to_numeric(self.result_df['P8'], errors = 'coerce')
+			self.result_df['0.005'] = pd.to_numeric(self.result_df['0.005'], errors = 'coerce')
+			self.result_df['0.995'] = pd.to_numeric(self.result_df['0.995'], errors = 'coerce')
 			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
 			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
 			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
@@ -394,8 +398,8 @@ class main_window(QDialog):
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
 			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
-			self.result_df['S_1'] = ((self.result_df['P8']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
-			self.result_df['S_2'] = ((self.result_df['P8']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['S_1'] = ((self.result_df['0.995']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['0.995']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var1'] = self.result_df['S_1'] ** 2
 			self.result_df['Var2'] = self.result_df['S_2'] ** 2
@@ -412,7 +416,7 @@ class main_window(QDialog):
 			self.results_table.resizeColumnsToContents()
 
 		elif self.second_percentiles_pair.isChecked():
-			mixed_percentiles = self.percentiles_df[['Pairs','P2','P7','MLE']]
+			mixed_percentiles = self.percentiles_df[['Parameter','0.025','0.975','MLE']]
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -460,11 +464,11 @@ class main_window(QDialog):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
 
-			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
-			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P2','P7','MLE','First_total','Second_total'])
+			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.025','0.975','MLE','First_total','Second_total'])
 
-			self.result_df['P2'] = pd.to_numeric(self.result_df['P2'], errors = 'coerce')
-			self.result_df['P7'] = pd.to_numeric(self.result_df['P7'], errors = 'coerce')
+			self.result_df['0.025'] = pd.to_numeric(self.result_df['0.025'], errors = 'coerce')
+			self.result_df['0.975'] = pd.to_numeric(self.result_df['0.975'], errors = 'coerce')
 			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
 			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
 			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
@@ -475,8 +479,8 @@ class main_window(QDialog):
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
 			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
-			self.result_df['S_1'] = ((self.result_df['P7']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
-			self.result_df['S_2'] = ((self.result_df['P7']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['S_1'] = ((self.result_df['0.975']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['0.975']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var1'] = self.result_df['S_1'] ** 2
 			self.result_df['Var2'] = self.result_df['S_2'] ** 2
@@ -493,7 +497,7 @@ class main_window(QDialog):
 			self.results_table.resizeColumnsToContents()
 
 		elif self.third_percentiles_pair.isChecked():
-			mixed_percentiles = self.percentiles_df[['Pairs','P3','P6','MLE']]
+			mixed_percentiles = self.percentiles_df[['Parameter','0.050','0.950','MLE']]
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -541,12 +545,12 @@ class main_window(QDialog):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
 
-			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
-			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
+			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.050','0.950','MLE','First_total','Second_total'])
 
 
-			self.result_df['P3'] = pd.to_numeric(self.result_df['P3'], errors = 'coerce')
-			self.result_df['P6'] = pd.to_numeric(self.result_df['P6'], errors = 'coerce')
+			self.result_df['0.050'] = pd.to_numeric(self.result_df['0.050'], errors = 'coerce')
+			self.result_df['0.950'] = pd.to_numeric(self.result_df['0.950'], errors = 'coerce')
 			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
 			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
 			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
@@ -557,8 +561,8 @@ class main_window(QDialog):
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
 			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
-			self.result_df['S_1'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
-			self.result_df['S_2'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['S_1'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var1'] = self.result_df['S_1'] ** 2
 			self.result_df['Var2'] = self.result_df['S_2'] ** 2
@@ -575,7 +579,7 @@ class main_window(QDialog):
 			self.results_table.resizeColumnsToContents()
 
 		elif self.fourth_percentiles_pair.isChecked():
-			mixed_percentiles = self.percentiles_df[['Pairs','P4','P5','MLE']]
+			mixed_percentiles = self.percentiles_df[['Parameter','0.250','0.750','MLE']]
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -623,11 +627,11 @@ class main_window(QDialog):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
 
-			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
-			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P4','P5','MLE','First_total','Second_total'])
+			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.250','0.750','MLE','First_total','Second_total'])
 
-			self.result_df['P4'] = pd.to_numeric(self.result_df['P4'], errors = 'coerce')
-			self.result_df['P5'] = pd.to_numeric(self.result_df['P5'], errors = 'coerce')
+			self.result_df['0.250'] = pd.to_numeric(self.result_df['0.250'], errors = 'coerce')
+			self.result_df['0.750'] = pd.to_numeric(self.result_df['0.750'], errors = 'coerce')
 			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
 			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
 			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
@@ -638,8 +642,8 @@ class main_window(QDialog):
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
 			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
-			self.result_df['S_1'] = ((self.result_df['P5']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
-			self.result_df['S_2'] = ((self.result_df['P5']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['S_1'] = ((self.result_df['0.750']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['0.750']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var1'] = self.result_df['S_1'] ** 2
 			self.result_df['Var2'] = self.result_df['S_2'] ** 2
@@ -657,7 +661,7 @@ class main_window(QDialog):
 
 		else:
 			self.third_percentiles_pair.setChecked(True)
-			mixed_percentiles = self.percentiles_df[['Pairs','P3','P6','MLE']]
+			mixed_percentiles = self.percentiles_df[['Parameter','0.050','0.950','MLE']]
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -706,11 +710,11 @@ class main_window(QDialog):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
 
-			#self.result_df = mixed_percentiles[['Pairs','t_value','p_value', 'dof']]
-			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Pairs','P3','P6','MLE','First_total','Second_total'])
+			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
+			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.050','0.950','MLE','First_total','Second_total'])
 
-			self.result_df['P3'] = pd.to_numeric(self.result_df['P3'], errors = 'coerce')
-			self.result_df['P6'] = pd.to_numeric(self.result_df['P6'], errors = 'coerce')
+			self.result_df['0.050'] = pd.to_numeric(self.result_df['0.050'], errors = 'coerce')
+			self.result_df['0.950'] = pd.to_numeric(self.result_df['0.950'], errors = 'coerce')
 			self.result_df['MLE'] = pd.to_numeric(self.result_df['MLE'], errors = 'coerce')
 			self.result_df['First_total'] = pd.to_numeric(self.result_df['First_total'], errors = 'coerce')
 			self.result_df['Second_total'] = pd.to_numeric(self.result_df['Second_total'], errors = 'coerce')
@@ -721,8 +725,8 @@ class main_window(QDialog):
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed_1'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
 			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
-			self.result_df['S_1'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
-			self.result_df['S_2'] = ((self.result_df['P6']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
+			self.result_df['S_1'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed_1'])*self.result_df['Sqrt_n']
+			self.result_df['S_2'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed_2'])*self.result_df['Sqrt_n_2']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var1'] = self.result_df['S_1'] ** 2
 			self.result_df['Var2'] = self.result_df['S_2'] ** 2
