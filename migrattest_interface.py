@@ -292,6 +292,7 @@ class main_window(QDialog):
                           '0.950':'0.950',
                           '0.975':'0.975',
                           '0.995':'0.995'}, index=[0])
+
 		df_with_titles = pd.concat([df_titles, self.percentiles_df]).reset_index(drop = True)
 
 		"""
@@ -304,7 +305,10 @@ class main_window(QDialog):
 			for columns in range(len(df_with_titles.columns)):
 				self.dataframe_table.setItem(rows, columns, QTableWidgetItem(str(df_with_titles.iloc[rows, columns])))
 
-		df_with_titles.style.apply(lambda x: ['background: lightyellow' if x.name in [0] else '' for i in x], axis=1)
+		#df_with_titles.style.apply(lambda x: ['background: lightyellow' if x.name in [0] else '' for i in x], axis=1)
+		#self.dataframe_table.setItem(0, 1, QtGui.QTableWidgetItem())
+		for x in range(0,10):
+			self.dataframe_table.item(0, x).setBackground(QtGui.QColor(211,227,252))
 
 		print(lower_df,'\n', upper_df,'\n', self.percentiles_df)
 
