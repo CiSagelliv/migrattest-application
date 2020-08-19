@@ -30,10 +30,8 @@ class main_window(QDialog):
 
 		self.setLayout(QVBoxLayout())
 		self.layout().addLayout(self.head())
-		self.layout().addLayout(self.percentiles_labels())
 		self.layout().addLayout(self.middle())
 		self.layout().addLayout(self.choose_percentiles())
-		self.layout().addLayout(self.results_labels())
 		self.layout().addLayout(self.results())
 
 		self.stylesheet = """
@@ -97,15 +95,6 @@ class main_window(QDialog):
 
 		return head_layout
 
-	def percentiles_labels(self):
-		lb_percentiles = QLabel("     Parameter  |   0.005   |   0.025   |   0.050   |   0.250   |   0.750   |   0.950   |   0.975   |  0.995")
-		lb_percentiles.setObjectName("percentiles_labels")
-
-		percentiles_labels_layout = QHBoxLayout()
-		percentiles_labels_layout.addWidget(lb_percentiles)
-
-		return percentiles_labels_layout
-
 	def middle(self):
 		#lb_dataframe = QLabel("General" + '\n' + "dataframe")
 		#lb_dataframe.setObjectName("lb_1")
@@ -143,15 +132,6 @@ class main_window(QDialog):
 		percentiles_layout.addWidget(self.fourth_percentiles_pair)
 
 		return percentiles_layout
-
-	def results_labels(self):
-		lb_results = QLabel("Parameter|P-|MLE|P+|First_total|Second_total|Sqrt_n|Sqrt_n_2|dof_1|dof_2|two_tailed_1|two_tailed_2|S_1|S_2|dof|Var1|Var2|SDp|calculated_t|two_tailed_both|result")
-		lb_results.setObjectName("results_labels")
-
-		results_labels_layout = QHBoxLayout()
-		results_labels_layout.addWidget(lb_results)
-
-		return results_labels_layout
 
 	def results(self):
 		btn_get_results = QPushButton("Results", self)
@@ -408,11 +388,35 @@ class main_window(QDialog):
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
-			self.results_table.setColumnCount(len(self.result_df.columns))
-			self.results_table.setRowCount(len(self.result_df.index))
-			for rows_1 in range(len(self.result_df.index)):
-				for columns_1 in range(len(self.result_df.columns)):
-					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
+			                          		'0.005':'0.005',
+			                          		'0.995':'0.995',
+			                          		'MLE':'MLE',
+			                          		'First_total':'Population_1',
+			                          		'Second_total':'Population_2',
+			                          		'Sqrt_n':'Population_1_sqrt',
+			                          		'Sqrt_n_2':'Population_2_sqrt',
+			                          		'dof_1':'Population_1_dof',
+											'dof_2':'Population_2_dof',
+											'two_tailed_1':'two_tailed_1',
+											'two_tailed_2':'two_tailed_2',
+											'S_1':'S_1',
+											'S_2':'S_2',
+											'dof':'Population_1_and_2_dof',
+											'Var1':'Population_1_var',
+											'Var2':'Population_2_var',
+											'SDp':'SDp',
+			                          		'calculated_t':'calculated_t',
+											'two_tailed_both':'two_tailed_both',
+											'result':'result'}, index=[0])
+
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+
+			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
+			self.results_table.setRowCount(len(percentiles_with_titles.index))
+			for rows_1 in range(len(percentiles_with_titles.index)):
+				for columns_1 in range(len(percentiles_with_titles.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
 		elif self.second_percentiles_pair.isChecked():
@@ -489,11 +493,35 @@ class main_window(QDialog):
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
-			self.results_table.setColumnCount(len(self.result_df.columns))
-			self.results_table.setRowCount(len(self.result_df.index))
-			for rows_1 in range(len(self.result_df.index)):
-				for columns_1 in range(len(self.result_df.columns)):
-					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
+			                          		'0.025':'0.025',
+			                          		'0.975':'0.975',
+			                          		'MLE':'MLE',
+			                          		'First_total':'Population_1',
+			                          		'Second_total':'Population_2',
+			                          		'Sqrt_n':'Population_1_sqrt',
+			                          		'Sqrt_n_2':'Population_2_sqrt',
+			                          		'dof_1':'Population_1_dof',
+											'dof_2':'Population_2_dof',
+											'two_tailed_1':'two_tailed_1',
+											'two_tailed_2':'two_tailed_2',
+											'S_1':'S_1',
+											'S_2':'S_2',
+											'dof':'Population_1_and_2_dof',
+											'Var1':'Population_1_var',
+											'Var2':'Population_2_var',
+											'SDp':'SDp',
+			                          		'calculated_t':'calculated_t',
+											'two_tailed_both':'two_tailed_both',
+											'result':'result'}, index=[0])
+
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+
+			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
+			self.results_table.setRowCount(len(percentiles_with_titles.index))
+			for rows_1 in range(len(percentiles_with_titles.index)):
+				for columns_1 in range(len(percentiles_with_titles.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
 		elif self.third_percentiles_pair.isChecked():
@@ -571,11 +599,35 @@ class main_window(QDialog):
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
-			self.results_table.setColumnCount(len(self.result_df.columns))
-			self.results_table.setRowCount(len(self.result_df.index))
-			for rows_1 in range(len(self.result_df.index)):
-				for columns_1 in range(len(self.result_df.columns)):
-					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
+			                          		'0.050':'0.050',
+			                          		'0.950':'0.950',
+			                          		'MLE':'MLE',
+			                          		'First_total':'Population_1',
+			                          		'Second_total':'Population_2',
+			                          		'Sqrt_n':'Population_1_sqrt',
+			                          		'Sqrt_n_2':'Population_2_sqrt',
+			                          		'dof_1':'Population_1_dof',
+											'dof_2':'Population_2_dof',
+											'two_tailed_1':'two_tailed_1',
+											'two_tailed_2':'two_tailed_2',
+											'S_1':'S_1',
+											'S_2':'S_2',
+											'dof':'Population_1_and_2_dof',
+											'Var1':'Population_1_var',
+											'Var2':'Population_2_var',
+											'SDp':'SDp',
+			                          		'calculated_t':'calculated_t',
+											'two_tailed_both':'two_tailed_both',
+											'result':'result'}, index=[0])
+
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+
+			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
+			self.results_table.setRowCount(len(percentiles_with_titles.index))
+			for rows_1 in range(len(percentiles_with_titles.index)):
+				for columns_1 in range(len(percentiles_with_titles.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
 		elif self.fourth_percentiles_pair.isChecked():
@@ -652,11 +704,35 @@ class main_window(QDialog):
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
-			self.results_table.setColumnCount(len(self.result_df.columns))
-			self.results_table.setRowCount(len(self.result_df.index))
-			for rows_1 in range(len(self.result_df.index)):
-				for columns_1 in range(len(self.result_df.columns)):
-					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
+			                          		'0.250':'0.250',
+			                          		'0.750':'0.750',
+			                          		'MLE':'MLE',
+			                          		'First_total':'Population_1',
+			                          		'Second_total':'Population_2',
+			                          		'Sqrt_n':'Population_1_sqrt',
+			                          		'Sqrt_n_2':'Population_2_sqrt',
+			                          		'dof_1':'Population_1_dof',
+											'dof_2':'Population_2_dof',
+											'two_tailed_1':'two_tailed_1',
+											'two_tailed_2':'two_tailed_2',
+											'S_1':'S_1',
+											'S_2':'S_2',
+											'dof':'Population_1_and_2_dof',
+											'Var1':'Population_1_var',
+											'Var2':'Population_2_var',
+											'SDp':'SDp',
+			                          		'calculated_t':'calculated_t',
+											'two_tailed_both':'two_tailed_both',
+											'result':'result'}, index=[0])
+
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+
+			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
+			self.results_table.setRowCount(len(percentiles_with_titles.index))
+			for rows_1 in range(len(percentiles_with_titles.index)):
+				for columns_1 in range(len(percentiles_with_titles.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
 		else:
@@ -735,11 +811,35 @@ class main_window(QDialog):
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 			self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
-			self.results_table.setColumnCount(len(self.result_df.columns))
-			self.results_table.setRowCount(len(self.result_df.index))
-			for rows_1 in range(len(self.result_df.index)):
-				for columns_1 in range(len(self.result_df.columns)):
-					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(self.result_df.iloc[rows_1, columns_1])))
+			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
+			                          		'0.050':'0.050',
+			                          		'0.950':'0.950',
+			                          		'MLE':'MLE',
+			                          		'First_total':'Population_1',
+			                          		'Second_total':'Population_2',
+			                          		'Sqrt_n':'Population_1_sqrt',
+			                          		'Sqrt_n_2':'Population_2_sqrt',
+			                          		'dof_1':'Population_1_dof',
+											'dof_2':'Population_2_dof',
+											'two_tailed_1':'two_tailed_1',
+											'two_tailed_2':'two_tailed_2',
+											'S_1':'S_1',
+											'S_2':'S_2',
+											'dof':'Population_1_and_2_dof',
+											'Var1':'Population_1_var',
+											'Var2':'Population_2_var',
+											'SDp':'SDp',
+			                          		'calculated_t':'calculated_t',
+											'two_tailed_both':'two_tailed_both',
+											'result':'result'}, index=[0])
+
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+
+			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
+			self.results_table.setRowCount(len(percentiles_with_titles.index))
+			for rows_1 in range(len(percentiles_with_titles.index)):
+				for columns_1 in range(len(percentiles_with_titles.columns)):
+					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
 
