@@ -65,8 +65,7 @@ class main_window(QDialog):
 		self.show()
 
 	"""
-		Interface basic elements
-
+		Interface elements
 	"""
 
 	def head(self):
@@ -138,13 +137,25 @@ class main_window(QDialog):
 
 		return results_layout
 
-	"""
-	- Opens migrate's txt files
-	- Find key words and its index in txt file and append the results into a list
-	- Creates different csv files (groups, lower and upper percentiles) for each program's iteration
-	"""
 
 	def go_to_open(self):
+
+		"""
+		This method open migrate's txt files and return three csv files:
+			- groups
+			- lower percentiles
+			- upper percentiles
+
+		input:
+			- Migrate's txt files
+
+		output:
+			- three csv files
+			- Migrate's txt file path
+			- total of populations
+
+		"""
+
 		filename = QFileDialog.getOpenFileName()
 		self.path = filename[0]
 
@@ -165,10 +176,6 @@ class main_window(QDialog):
 		for element in self.list_of_indexes:
 			print("Line number: ", element)
 
-		"""
-			Begins groups file creation
-		"""
-
 		groups_filename = 'groups'
 		index_1 = 0
 
@@ -180,12 +187,6 @@ class main_window(QDialog):
 					#print(re.sub("\s+",",", line.strip()))
 					group_file.write(re.sub("\s+",",", line.strip()) + '\n')
 
-		"""
-			- Creates a dataframe with groups information
-			- Deletes all NaN values
-			- Deletes columns with unnecessary data (ex. locus column and missing(0))
-			- Gets the total of groups and its values (ex. Group 1 - 60) and change its data type (str to int)
-		"""
 
 		groups_df = pd.read_csv(f"{groups_filename}{index_1}.csv",header=None)
 		#Remove NaN values
@@ -199,10 +200,6 @@ class main_window(QDialog):
 		self.total_per_group = list(map(int, (groups_df[3])))
 		self.lb_n_groups.setText(str(len(self.total_per_group)))
 
-		"""
-			Begins lower percentiles file creation
-		"""
-
 		range_lower_start = (self.list_of_indexes[2]-1) + 4 + len(self.total_per_group)
 		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
 
@@ -215,10 +212,6 @@ class main_window(QDialog):
 			for line in islice(origin_file, range_lower_start, range_lower_end):
 				with open(f"{self.lower_percentiles_filename}{self.index_2}.csv",'a') as lower_file:
 					lower_file.write(re.sub("\s+", ",", line.strip()) + '\n')
-
-		"""
-			Begins upper percentiles file creation
-		"""
 
 		range_upper_start = (self.list_of_indexes[3]-1) + 4 + len(self.total_per_group)
 		range_upper_end = range_upper_start + len(list(permutations(range(len(self.total_per_group)),2)))
@@ -234,18 +227,26 @@ class main_window(QDialog):
 					upper_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 	def generate_dataframe(self):
+		"""
+		This method create a table with percentiles and MLE values
+
+		input:
+			- groups csv file
+			- lower percentiles csv file
+			- upper percentiles csv file
+
+		output:
+			- general dataframe with all the values
+			- column's title painted
+			- table with dataframe data
+
+		"""
+
 		lower_df = pd.read_csv(f"{self.lower_percentiles_filename}{self.index_2}.csv", header=None)
 		lower_df.columns = ['Parameter','0.005','0.025','0.050','0.250','MLE']
 
 		upper_df = pd.read_csv(f"{self.upper_percentiles_filename}{self.index_3}.csv", header=None)
 		upper_df.columns = ['Parameter','MLE','0.750','0.950','0.975','0.995']
-
-		"""
-			- Delete repeated columns
-			- Create percentiles dataframe (concat lower and upper dataframe)
-			- Delete all * from every row
-			- Change dataframe data type (object to numeric)
-		"""
 
 		upper_df = upper_df.drop(['MLE'], axis=1)
 		upper_df = upper_df.drop(['Parameter'], axis=1)
@@ -279,10 +280,6 @@ class main_window(QDialog):
 
 		df_with_titles = pd.concat([df_titles, self.percentiles_df]).reset_index(drop = True)
 
-		"""
-			Shows dataframe
-		"""
-
 		self.dataframe_table.setColumnCount(len(df_with_titles.columns))
 		self.dataframe_table.setRowCount(len(df_with_titles.index))
 		for rows in range(len(df_with_titles.index)):
@@ -296,7 +293,18 @@ class main_window(QDialog):
 
 	def get_results(self):
 		"""
-			Get the sum of significant percentiles rows
+		This method:
+			- choose corresponding values (percentiles)
+			- take those values and create different dataframes
+			- select corresponding pairs (ex. 21 - 12) and do math with them
+
+		input:
+			- general dataframe
+
+		output:
+			- t test with unequal variance
+			- dataframe with math and results
+
 		"""
 
 		if self.first_percentiles_pair.isChecked():
@@ -834,6 +842,17 @@ class main_window(QDialog):
 
 
 	def df_to_file(self):
+		"""
+		This method export the last dataframe into csv file
+
+		input:
+			- dataframe created in get_results method
+
+		output:
+			- results csv file 
+
+		"""
+
 		results_filename = 'results'
 		index_4 = 0
 
