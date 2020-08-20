@@ -305,10 +305,8 @@ class main_window(QDialog):
 			for columns in range(len(df_with_titles.columns)):
 				self.dataframe_table.setItem(rows, columns, QTableWidgetItem(str(df_with_titles.iloc[rows, columns])))
 
-		#df_with_titles.style.apply(lambda x: ['background: lightyellow' if x.name in [0] else '' for i in x], axis=1)
-		#self.dataframe_table.setItem(0, 1, QtGui.QTableWidgetItem())
-		for x in range(0,10):
-			self.dataframe_table.item(0, x).setBackground(QtGui.QColor(211,227,252))
+		for n_cell in range(0,10):
+			self.dataframe_table.item(0, n_cell).setBackground(QtGui.QColor(211,227,252))
 
 		print(lower_df,'\n', upper_df,'\n', self.percentiles_df)
 
@@ -423,6 +421,9 @@ class main_window(QDialog):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
+			for percentile_cell in range(0,21):
+				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
 		elif self.second_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.025','0.975','MLE']]
 
@@ -527,6 +528,9 @@ class main_window(QDialog):
 				for columns_1 in range(len(percentiles_with_titles.columns)):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
+
+			for percentile_cell in range(0,21):
+				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
 
 		elif self.third_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.050','0.950','MLE']]
@@ -634,6 +638,9 @@ class main_window(QDialog):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
+			for percentile_cell in range(0,21):
+				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
 		elif self.fourth_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.250','0.750','MLE']]
 
@@ -738,6 +745,9 @@ class main_window(QDialog):
 				for columns_1 in range(len(percentiles_with_titles.columns)):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
+
+			for percentile_cell in range(0,21):
+				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
 
 		else:
 			self.third_percentiles_pair.setChecked(True)
@@ -845,6 +855,9 @@ class main_window(QDialog):
 				for columns_1 in range(len(percentiles_with_titles.columns)):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
+
+			for percentile_cell in range(0,21):
+				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
 
 
 	def df_to_file(self):
