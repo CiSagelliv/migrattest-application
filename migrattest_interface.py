@@ -14,8 +14,6 @@ from itertools import combinations
 import pandas as pd
 import numpy as np
 from scipy.stats import t
-from scipy.stats import ttest_ind_from_stats
-from scipy.special import stdtr
 
 
 class main_window(QDialog):
@@ -96,13 +94,9 @@ class main_window(QDialog):
 		return head_layout
 
 	def middle(self):
-		#lb_dataframe = QLabel("General" + '\n' + "dataframe")
-		#lb_dataframe.setObjectName("lb_1")
-
 		self.dataframe_table = QTableWidget()
 
 		middle_layout = QHBoxLayout()
-		#middle_layout.addWidget(lb_dataframe)
 		middle_layout.addWidget(self.dataframe_table)
 
 		return middle_layout
@@ -118,11 +112,6 @@ class main_window(QDialog):
 		self.third_percentiles_pair.setText('[Default (0.050 - 0.950)]')
 		self.fourth_percentiles_pair = QRadioButton(self)
 		self.fourth_percentiles_pair.setText('[0. 250 - 0.750]')
-
-		"""self.first_percentiles_pair.toggled.connect(self.first_selected)
-		self.second_percentiles_pair.toggled.connect(self.second_selected)
-		self.third_percentiles_pair.toggled.connect(self.third_selected)
-		self.fourth_percentiles_pair.toggled.connect(self.fourth_selected)"""
 
 		percentiles_layout = QHBoxLayout()
 		percentiles_layout.addWidget(lb_choose)
@@ -209,7 +198,6 @@ class main_window(QDialog):
 
 		self.total_per_group = list(map(int, (groups_df[3])))
 		self.lb_n_groups.setText(str(len(self.total_per_group)))
-		#print(self.total_per_group)
 
 		"""
 			Begins lower percentiles file creation
@@ -217,7 +205,6 @@ class main_window(QDialog):
 
 		range_lower_start = (self.list_of_indexes[2]-1) + 4 + len(self.total_per_group)
 		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
-		#print(range_lower_start, range_lower_end)
 
 		self.lower_percentiles_filename = 'lower_percentiles'
 		self.index_2 = 0
@@ -227,7 +214,6 @@ class main_window(QDialog):
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_lower_start, range_lower_end):
 				with open(f"{self.lower_percentiles_filename}{self.index_2}.csv",'a') as lower_file:
-					#print(re.sub("\s+", ",", line.strip()))
 					lower_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 		"""
@@ -236,7 +222,6 @@ class main_window(QDialog):
 
 		range_upper_start = (self.list_of_indexes[3]-1) + 4 + len(self.total_per_group)
 		range_upper_end = range_upper_start + len(list(permutations(range(len(self.total_per_group)),2)))
-		#print(range_upper_start, range_upper_end)
 
 		self.upper_percentiles_filename = 'upper_percentiles'
 		self.index_3 = 0
@@ -246,7 +231,6 @@ class main_window(QDialog):
 		with open(self.path, 'r') as origin_file:
 			for line in islice(origin_file, range_upper_start, range_upper_end):
 				with open(f"{self.upper_percentiles_filename}{self.index_3}.csv", 'a') as upper_file:
-					#print(re.sub("\s+", ",", line.strip()))
 					upper_file.write(re.sub("\s+", ",", line.strip()) + '\n')
 
 	def generate_dataframe(self):
@@ -317,7 +301,6 @@ class main_window(QDialog):
 
 		if self.first_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.005','0.995','MLE']]
-			#mixed_percentiles['Sum_of_values'] = mixed_percentiles.sum(axis=1)
 
 			first_element = list(combinations((self.total_per_group), len(self.total_per_group)-1))
 			first_element.reverse()
@@ -364,8 +347,6 @@ class main_window(QDialog):
 			for n in range(half_n_permutations):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
-
-			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.005','0.995','MLE','First_total','Second_total'])
 
 			self.result_df['0.005'] = pd.to_numeric(self.result_df['0.005'], errors = 'coerce')
@@ -472,8 +453,6 @@ class main_window(QDialog):
 			for n in range(half_n_permutations):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
-
-			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.025','0.975','MLE','First_total','Second_total'])
 
 			self.result_df['0.025'] = pd.to_numeric(self.result_df['0.025'], errors = 'coerce')
@@ -580,8 +559,6 @@ class main_window(QDialog):
 			for n in range(half_n_permutations):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
-
-			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.050','0.950','MLE','First_total','Second_total'])
 
 
@@ -689,8 +666,6 @@ class main_window(QDialog):
 			for n in range(half_n_permutations):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
-
-			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.250','0.750','MLE','First_total','Second_total'])
 
 			self.result_df['0.250'] = pd.to_numeric(self.result_df['0.250'], errors = 'coerce')
@@ -799,8 +774,6 @@ class main_window(QDialog):
 			for n in range(half_n_permutations):
 				to_df.append(mixed_percentiles.iloc[[secondary_diagonal[n],second_pair[n]]])
 
-
-			#self.result_df = mixed_percentiles[['Parameter','t_value','p_value', 'dof']]
 			self.result_df = pd.DataFrame(np.concatenate(to_df), columns=['Parameter','0.050','0.950','MLE','First_total','Second_total'])
 
 			self.result_df['0.050'] = pd.to_numeric(self.result_df['0.050'], errors = 'coerce')
