@@ -1,2 +1,2 @@
-# file-template
+# migrattest-application
 Template for Migrate files
