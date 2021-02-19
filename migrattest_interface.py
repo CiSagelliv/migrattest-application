@@ -1,5 +1,5 @@
 #PyQt5 library
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QDialog
 from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout
 from PyQt5.QtWidgets import QPushButton, QTextEdit, QLabel, QFileDialog, QPlainTextEdit, QRadioButton
@@ -14,7 +14,7 @@ from itertools import combinations
 import pandas as pd
 import numpy as np
 from scipy.stats import t
-
+import openpyxl
 
 class main_window(QDialog):
 	def __init__(self):
@@ -159,6 +159,8 @@ class main_window(QDialog):
 		filename = QFileDialog.getOpenFileName()
 		self.path = filename[0]
 
+		print(filename, type(filename))
+
 
 		with open(self.path, 'r') as origin_file:
 			self.lb_selected_file.setText(self.path)
@@ -182,7 +184,9 @@ class main_window(QDialog):
 		while os.path.exists(f"{groups_filename}{index_1}.csv"):
 			index_1 += 1
 		with open(self.path, 'r') as origin_file:
+			print(type(origin_file))
 			for line in islice(origin_file, (self.list_of_indexes[0]-1) + 4, (self.list_of_indexes[1]-1)):
+				print(type(origin_file))
 				with open(f"{groups_filename}{index_1}.csv", 'a') as group_file:
 					#print(re.sub("\s+",",", line.strip()))
 					group_file.write(re.sub("\s+",",", line.strip()) + '\n')
@@ -202,6 +206,8 @@ class main_window(QDialog):
 
 		range_lower_start = (self.list_of_indexes[2]-1) + 4 + len(self.total_per_group)
 		range_lower_end = range_lower_start + len(list(permutations(range(len(self.total_per_group)),2)))
+
+		#print(len(list(permutations(range(len(self.total_per_group)),2))))
 
 		self.lower_percentiles_filename = 'lower_percentiles'
 		self.index_2 = 0
@@ -367,22 +373,24 @@ class main_window(QDialog):
 			self.result_df['dof_1'] = self.result_df['First_total'] - 1
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
 			self.result_df['S'] = ((self.result_df['0.995']-self.result_df['MLE'])/self.result_df['two_tailed'])*self.result_df['Sqrt_n']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var'] = self.result_df['S'] ** 2
 			self.result_df['SDp'] = ((self.result_df['dof_1']*self.result_df['Var'])+(self.result_df['dof_1']*self.result_df['Var']).rolling(1).sum().shift(-1))/self.result_df['dof']
-			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
+			self.result_df['calculated_t'] = (+(self.result_df['MLE'] - self.result_df['MLE'].shift(-1)))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
-			for row in self.result_df.iterrows():
-			    if(((-self.result_df['two_tailed'])>(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])>(self.result_df['two_tailed_both'])).all()):
-			        #print("Unidirectional")
-			        self.result_df['result'] = "Unidirectional" 
-			    elif(((-self.result_df['two_tailed'])<(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])<(self.result_df['two_tailed_both'])).all()):
-			        #print("Bidirectional")
-			        self.result_df['result'] = "Bidirectional"
+			#print(self.result_df)
 
-			self.cut_result_df = self.result_df.iloc[::2]
+			cols = ['Parameter','0.005','0.995','MLE','First_total','Second_total','Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']
+
+			self.result_df_2 = self.result_df.loc[:, cols]
+			self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']] = self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']].round(3)
+
+			self.result_df_2['result'] = self.result_df_2.two_tailed_both.abs().le(self.result_df_2.calculated_t.abs())
+			self.result_df_2['result'] = self.result_df_2['result'].map({True: 'Bidirectional', False: 'Unidirectional'})
+
 
 			#self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
 
@@ -390,21 +398,21 @@ class main_window(QDialog):
 			                          		'0.005':'0.005',
 			                          		'0.995':'0.995',
 			                          		'MLE':'MLE',
-			                          		'First_total':'Population_1',
-			                          		'Second_total':'Population_2',
-			                          		'Sqrt_n':'Population_1_sqrt',
-			                          		'dof_1':'Population_1_dof',
-											'dof_2':'Population_2_dof',
+			                          		'First_total':'n_1',
+			                          		'Second_total':'n_2',
+			                          		'Sqrt_n':'n_sqrt',
+			                          		'dof_1':'dof_1',
+											'dof_2':'dof_2',
 											'two_tailed':'two_tailed',
 											'S':'S',
-											'dof':'Population_1_and_2_dof',
-											'Var':'Population_var',
+											'dof':'dof',
+											'Var':'Var',
 											'SDp':'SDp',
 			                          		'calculated_t':'calculated_t',
 											'two_tailed_both':'two_tailed_both',
 											'result':'result'}, index=[0])
 
-			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df_2]).reset_index(drop = True)
 
 			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
 			self.results_table.setRowCount(len(percentiles_with_titles.index))
@@ -413,8 +421,30 @@ class main_window(QDialog):
 					self.results_table.setItem(rows_1, columns_1, QTableWidgetItem(str(percentiles_with_titles.iloc[rows_1, columns_1])))
 			self.results_table.resizeColumnsToContents()
 
+			# I need to find a way to delete or fill those columns inside one for loop 
+
 			for percentile_cell in range(0,17):
 				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
+			for indice in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice % 2 == 0:
+					self.results_table.item(indice, 11).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_2 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_2 % 2 == 0:
+					self.results_table.item(indice_2, 13).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_3 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_3 % 2 == 0:
+					self.results_table.item(indice_3, 14).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_4 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_4 % 2 == 0:
+					self.results_table.item(indice_4, 15).setBackground(QtGui.QColor(0,0,0))
+			
+			for indice_5 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_5 % 2 == 0:
+					self.results_table.item(indice_5, 16).setBackground(QtGui.QColor(0,0,0))
 
 		elif self.second_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.025','0.975','MLE']]
@@ -476,6 +506,7 @@ class main_window(QDialog):
 			self.result_df['dof_1'] = self.result_df['First_total'] - 1
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
 			self.result_df['S'] = ((self.result_df['0.975']-self.result_df['MLE'])/self.result_df['two_tailed'])*self.result_df['Sqrt_n']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var'] = self.result_df['S'] ** 2
@@ -483,37 +514,35 @@ class main_window(QDialog):
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
-			for row in self.result_df.iterrows():
-			    if(((-self.result_df['two_tailed'])>(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])>(self.result_df['two_tailed_both'])).all()):
-			        #print("Unidirectional")
-			        self.result_df['result'] = "Unidirectional" 
-			    elif(((-self.result_df['two_tailed'])<(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])<(self.result_df['two_tailed_both'])).all()):
-			        #print("Bidirectional")
-			        self.result_df['result'] = "Bidirectional"
+			cols = ['Parameter','0.025','0.975','MLE','First_total','Second_total','Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']
 
-			self.cut_result_df = self.result_df.iloc[::2]
+			self.result_df_2 = self.result_df.loc[:, cols]
+			self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']] = self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']].round(3)
 
-			#self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
+			self.result_df_2['result'] = self.result_df_2.two_tailed_both.abs().le(self.result_df_2.calculated_t.abs())
+			self.result_df_2['result'] = self.result_df_2['result'].map({True: 'Bidirectional', False: 'Unidirectional'})
+
+			#print(self.result_df)
 
 			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
 			                          		'0.025':'0.025',
 			                          		'0.975':'0.975',
 			                          		'MLE':'MLE',
-			                          		'First_total':'Population_1',
-			                          		'Second_total':'Population_2',
-			                          		'Sqrt_n':'Population_1_sqrt',
-			                          		'dof_1':'Population_1_dof',
-											'dof_2':'Population_2_dof',
+			                          		'First_total':'n_1',
+			                          		'Second_total':'n_2',
+			                          		'Sqrt_n':'n_sqrt',
+			                          		'dof_1':'dof_1',
+											'dof_2':'dof_2',
 											'two_tailed':'two_tailed',
-											'S':'S_1',
-											'dof':'Population_1_and_2_dof',
-											'Var1':'Population_var',
+											'S':'S',
+											'dof':'dof',
+											'Var':'Var',
 											'SDp':'SDp',
 			                          		'calculated_t':'calculated_t',
 											'two_tailed_both':'two_tailed_both',
 											'result':'result'}, index=[0])
 
-			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df_2]).reset_index(drop = True)
 
 			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
 			self.results_table.setRowCount(len(percentiles_with_titles.index))
@@ -524,6 +553,26 @@ class main_window(QDialog):
 
 			for percentile_cell in range(0,17):
 				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
+			for indice in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice % 2 == 0:
+					self.results_table.item(indice, 11).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_2 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_2 % 2 == 0:
+					self.results_table.item(indice_2, 13).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_3 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_3 % 2 == 0:
+					self.results_table.item(indice_3, 14).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_4 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_4 % 2 == 0:
+					self.results_table.item(indice_4, 15).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_5 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_5 % 2 == 0:
+					self.results_table.item(indice_5, 16).setBackground(QtGui.QColor(0,0,0))
 
 		elif self.third_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.050','0.950','MLE']]
@@ -586,6 +635,7 @@ class main_window(QDialog):
 			self.result_df['dof_1'] = self.result_df['First_total'] - 1
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
 			self.result_df['S'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed'])*self.result_df['Sqrt_n']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var'] = self.result_df['S'] ** 2
@@ -593,37 +643,33 @@ class main_window(QDialog):
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
-			for row in self.result_df.iterrows():
-			    if(((-self.result_df['two_tailed'])>(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])>(self.result_df['two_tailed_both'])).all()):
-			        #print("Unidirectional")
-			        self.result_df['result'] = "Unidirectional" 
-			    elif(((-self.result_df['two_tailed'])<(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])<(self.result_df['two_tailed_both'])).all()):
-			        #print("Bidirectional")
-			        self.result_df['result'] = "Bidirectional"
+			cols = ['Parameter','0.050','0.950','MLE','First_total','Second_total','Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']
 
-			self.cut_result_df = self.result_df.iloc[::2]
+			self.result_df_2 = self.result_df.loc[:, cols]
+			self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']] = self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']].round(3)
 
-			#self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
+			self.result_df_2['result'] = self.result_df_2.two_tailed_both.abs().le(self.result_df_2.calculated_t.abs())
+			self.result_df_2['result'] = self.result_df_2['result'].map({True: 'Bidirectional', False: 'Unidirectional'})			        
 
 			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
 			                          		'0.050':'0.050',
 			                          		'0.950':'0.950',
 			                          		'MLE':'MLE',
-			                          		'First_total':'Population_1',
-			                          		'Second_total':'Population_2',
-			                          		'Sqrt_n':'Population_1_sqrt',
-			                          		'dof_1':'Population_1_dof',
-											'dof_2':'Population_2_dof',
+			                          		'First_total':'n_1',
+			                          		'Second_total':'n_2',
+			                          		'Sqrt_n':'n_sqrt',
+			                          		'dof_1':'dof_1',
+											'dof_2':'dof_2',
 											'two_tailed':'two_tailed',
 											'S':'S',
-											'dof':'Population_1_and_2_dof',
-											'Var':'Population_var',
+											'dof':'dof',
+											'Var':'Var',
 											'SDp':'SDp',
 			                          		'calculated_t':'calculated_t',
 											'two_tailed_both':'two_tailed_both',
 											'result':'result'}, index=[0])
 
-			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df_2]).reset_index(drop = True)
 
 			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
 			self.results_table.setRowCount(len(percentiles_with_titles.index))
@@ -634,6 +680,26 @@ class main_window(QDialog):
 
 			for percentile_cell in range(0,17):
 				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
+			for indice in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice % 2 == 0:
+					self.results_table.item(indice, 11).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_2 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_2 % 2 == 0:
+					self.results_table.item(indice_2, 13).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_3 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_3 % 2 == 0:
+					self.results_table.item(indice_3, 14).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_4 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_4 % 2 == 0:
+					self.results_table.item(indice_4, 15).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_5 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_5 % 2 == 0:
+					self.results_table.item(indice_5, 16).setBackground(QtGui.QColor(0,0,0))
 
 		elif self.fourth_percentiles_pair.isChecked():
 			mixed_percentiles = self.percentiles_df[['Parameter','0.250','0.750','MLE']]
@@ -695,6 +761,7 @@ class main_window(QDialog):
 			self.result_df['dof_1'] = self.result_df['First_total'] - 1
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
 			self.result_df['S'] = ((self.result_df['0.750']-self.result_df['MLE'])/self.result_df['two_tailed'])*self.result_df['Sqrt_n']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var'] = self.result_df['S'] ** 2
@@ -702,37 +769,33 @@ class main_window(QDialog):
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
-			for row in self.result_df.iterrows():
-			    if(((-self.result_df['two_tailed'])>(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])>(self.result_df['two_tailed_both'])).all()):
-			        #print("Unidirectional")
-			        self.result_df['result'] = "Unidirectional" 
-			    elif(((-self.result_df['two_tailed'])<(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])<(self.result_df['two_tailed_both'])).all()):
-			        #print("Bidirectional")
-			        self.result_df['result'] = "Bidirectional"
+			cols = ['Parameter','0.250','0.750','MLE','First_total','Second_total','Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']
 
-			self.cut_result_df = self.result_df.iloc[::2]
+			self.result_df_2 = self.result_df.loc[:, cols]
+			self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']] = self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']].round(3)
 
-			#self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
+			self.result_df_2['result'] = self.result_df_2.two_tailed_both.abs().le(self.result_df_2.calculated_t.abs())
+			self.result_df_2['result'] = self.result_df_2['result'].map({True: 'Bidirectional', False: 'Unidirectional'})		        
 
 			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
 			                          		'0.250':'0.250',
 			                          		'0.750':'0.750',
 			                          		'MLE':'MLE',
-			                          		'First_total':'Population_1',
-			                          		'Second_total':'Population_2',
-			                          		'Sqrt_n':'Population_1_sqrt',
-			                          		'dof_1':'Population_1_dof',
-											'dof_2':'Population_2_dof',
+			                          		'First_total':'n_1',
+			                          		'Second_total':'n_2',
+			                          		'Sqrt_n':'n_sqrt',
+			                          		'dof_1':'dof_1',
+											'dof_2':'dof_2',
 											'two_tailed':'two_tailed',
 											'S':'S',
-											'dof':'Population_1_and_2_dof',
-											'Var':'Population_var',
+											'dof':'dof',
+											'Var':'Var',
 											'SDp':'SDp',
 			                          		'calculated_t':'calculated_t',
 											'two_tailed_both':'two_tailed_both',
 											'result':'result'}, index=[0])
 
-			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df_2]).reset_index(drop = True)
 
 			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
 			self.results_table.setRowCount(len(percentiles_with_titles.index))
@@ -743,6 +806,26 @@ class main_window(QDialog):
 
 			for percentile_cell in range(0,17):
 				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
+
+			for indice in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice % 2 == 0:
+					self.results_table.item(indice, 11).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_2 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_2 % 2 == 0:
+					self.results_table.item(indice_2, 13).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_3 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_3 % 2 == 0:
+					self.results_table.item(indice_3, 14).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_4 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_4 % 2 == 0:
+					self.results_table.item(indice_4, 15).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_5 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_5 % 2 == 0:
+					self.results_table.item(indice_5, 16).setBackground(QtGui.QColor(0,0,0))
 
 		else:
 			self.third_percentiles_pair.setChecked(True)
@@ -806,6 +889,7 @@ class main_window(QDialog):
 			self.result_df['dof_1'] = self.result_df['First_total'] - 1
 			self.result_df['dof_2'] = self.result_df['Second_total'] - 1
 			self.result_df['two_tailed'] = t.ppf(1-0.05/2, self.result_df['dof_1'])
+			self.result_df['two_tailed_2'] = t.ppf(1-0.05/2, self.result_df['dof_2'])
 			self.result_df['S'] = ((self.result_df['0.950']-self.result_df['MLE'])/self.result_df['two_tailed'])*self.result_df['Sqrt_n']
 			self.result_df['dof'] = self.result_df['First_total'] + self.result_df['Second_total'] - 2
 			self.result_df['Var'] = self.result_df['S'] ** 2
@@ -813,37 +897,35 @@ class main_window(QDialog):
 			self.result_df['calculated_t'] = (self.result_df['MLE'] - self.result_df['MLE'].shift(-1))/np.sqrt(self.result_df['SDp']*((1/self.result_df['dof_1'])+(1/self.result_df['dof_2'])))
 			self.result_df['two_tailed_both'] = t.ppf(1-0.05/2, self.result_df['dof'])
 
-			for row in self.result_df.iterrows():
-			    if(((-self.result_df['two_tailed'])>(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])>(self.result_df['two_tailed_both'])).all()):
-			        #print("Unidirectional")
-			        self.result_df['result'] = "Unidirectional" 
-			    elif(((-self.result_df['two_tailed'])<(self.result_df['calculated_t'])).all(),((self.result_df['calculated_t'])<(self.result_df['two_tailed_both'])).all()):
-			        #print("Bidirectional")
-			        self.result_df['result'] = "Bidirectional"
+			cols = ['Parameter','0.050','0.950','MLE','First_total','Second_total','Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']
 
-			#self.result_df['result'] = np.where((-self.result_df['two_tailed_1']).all() > (self.result_df['calculated_t']).all() > (self.result_df['two_tailed_both']).all(), 'Rejected', 'Accepted')
+			self.result_df_2 = self.result_df.loc[:, cols]
+			self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']] = self.result_df_2[['Sqrt_n','dof_1','dof_2','two_tailed','S','dof','Var','SDp','calculated_t','two_tailed_both']].round(3)
 
-			self.cut_result_df = self.result_df.iloc[::2]
+			self.result_df_2['result'] = self.result_df_2.two_tailed_both.abs().le(self.result_df_2.calculated_t.abs())
+			self.result_df_2['result'] = self.result_df_2['result'].map({True: 'Bidirectional', False: 'Unidirectional'})		        
+
+			#print(self.result_df)
 
 			percentiles_titles = pd.DataFrame({'Parameter':'Parameter',
 			                          		'0.050':'0.050',
 			                          		'0.950':'0.950',
 			                          		'MLE':'MLE',
-			                          		'First_total':'Population_1',
-			                          		'Second_total':'Population_2',
-			                          		'Sqrt_n':'Population_1_sqrt',
-			                          		'dof_1':'Population_1_dof',
-											'dof_2':'Population_2_dof',
+			                          		'First_total':'n_1',
+			                          		'Second_total':'n_2',
+			                          		'Sqrt_n':'n_sqrt',
+			                          		'dof_1':'dof_1',
+											'dof_2':'dof_2',
 											'two_tailed':'two_tailed',
 											'S':'S',
-											'dof':'Population_1_and_2_dof',
-											'Var1':'Population_var',
+											'dof':'dof',
+											'Var':'Var',
 											'SDp':'SDp',
 			                          		'calculated_t':'calculated_t',
 											'two_tailed_both':'two_tailed_both',
 											'result':'result'}, index=[0])
 
-			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df]).reset_index(drop = True)
+			percentiles_with_titles = pd.concat([percentiles_titles, self.result_df_2]).reset_index(drop = True)
 
 			self.results_table.setColumnCount(len(percentiles_with_titles.columns))
 			self.results_table.setRowCount(len(percentiles_with_titles.index))
@@ -855,6 +937,28 @@ class main_window(QDialog):
 			for percentile_cell in range(0,17):
 				self.results_table.item(0, percentile_cell).setBackground(QtGui.QColor(211,227,252))
 
+			for indice in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice % 2 == 0:
+					self.results_table.item(indice, 11).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_2 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_2 % 2 == 0:
+					self.results_table.item(indice_2, 13).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_3 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_3 % 2 == 0:
+					self.results_table.item(indice_3, 14).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_4 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_4 % 2 == 0:
+					self.results_table.item(indice_4, 15).setBackground(QtGui.QColor(0,0,0))
+
+			for indice_5 in range(1, (len(list(permutations(range(len(self.total_per_group)),2)))+1)):
+				if indice_5 % 2 == 0:
+					self.results_table.item(indice_5, 16).setBackground(QtGui.QColor(0,0,0))
+
+	def colores(self, data):
+		return ['background-color: black' if idx % 2 == 1 else '' for idx in range(len(self.result_df_2['Parameter']))]
 
 	def df_to_file(self):
 		"""
@@ -864,21 +968,17 @@ class main_window(QDialog):
 			- dataframe created in get_results method
 
 		output:
-			- results csv file 
-
+			- results csv file
+		
 		"""
 
 		results_filename = 'results'
-		cut_results = 'cut_results'
 		index_4 = 0
-		index_5 = 0
 
-		while os.path.exists(f"{results_filename}{index_4}.csv"):
+		while os.path.exists(f"{results_filename}{index_4}.xlsx"):
 			index_4 += 1
-			index_5 += 0
-		self.result_df.to_csv(f"{results_filename}{index_4}.csv",encoding='utf-8', index=False)
-		self.cut_result_df.to_csv(f"{cut_results}{index_5}.csv",encoding='utf-8', index=False)
-
+		self.result_df_2.style.apply(self.colores, subset=['dof','Var','SDp','calculated_t','two_tailed_both','result']).to_excel(f'{results_filename}{index_4}.xlsx', engine='openpyxl')
+		#self.result_df.to_csv(f"{results_filename}{index_4}.csv",encoding='utf-8', index=False)
 
 if __name__ == '__main__':
 	app = QApplication(sys.argv)
