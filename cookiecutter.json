@@ -1,0 +1,10 @@
+{
+    "full_name": "Cinthya Villegas",
+    "email": "cinthyagpe.villegas@gmail.com",
+    "project_name": "migrattest",
+    "repo_name": "migrattest",
+    "project_short_description": "Herramienta computacional para estimar la tasa de migración de flujos genéticos en diferentes poblaciones.",
+    "release_date": "2021/02/19",
+    "year": "2021",
+    "version": "0.1.1"
+}
