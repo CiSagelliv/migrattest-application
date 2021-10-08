@@ -969,6 +969,7 @@ class main_window(QDialog):
 
 		output:
 			- results csv file
+			- tengo que hacer cambios aquí, correcciones, etc
 		
 		"""
 
